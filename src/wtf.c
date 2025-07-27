@@ -706,7 +706,7 @@ static size_t wtf_strncpy(char* dest, const char* src, size_t dest_size)
     }
     return strlen(dest);
 #else
-    size_t result = strlcpy(dest, src, dest_size);
+    size_t result = strncpy(dest, src, dest_size);
     if (result >= dest_size) {
         return dest_size - 1;
     }
