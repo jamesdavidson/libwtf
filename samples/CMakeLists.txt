@@ -9,24 +9,26 @@ target_link_libraries(wtf_echo_server
 )
 
 # Echo Client
-add_executable(wtf_echo_client
-    echo_client.c
-)
-
-target_link_libraries(wtf_echo_client
-    PRIVATE
-        wtf
-)
+if(FALSE) # TODO: Update and re-enable the sample
+    add_executable(wtf_echo_client
+        echo_client.c
+    )
+    target_link_libraries(wtf_echo_client
+        PRIVATE
+            wtf
+    )
+endif()
 
 # Chat Application
-add_executable(wtf_chat
-    chat.c
-)
-
-target_link_libraries(wtf_chat
-    PRIVATE
-        wtf
-)
+if(FALSE) # TODO: Update and re-enable the sample
+    add_executable(wtf_chat
+        chat.c
+    )
+    target_link_libraries(wtf_chat
+        PRIVATE
+            wtf
+    )
+endif()
 
 # Copy certificates if they exist
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/certs")
@@ -36,7 +38,7 @@ endif()
 # Install sample executables
 install(TARGETS 
     wtf_echo_server
-    wtf_echo_client
-    wtf_chat
+    #wtf_echo_client # TODO: Update and re-enable the sample
+    #wtf_chat # TODO: Update and re-enable the sample
     DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
