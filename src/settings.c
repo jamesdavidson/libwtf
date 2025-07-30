@@ -21,8 +21,6 @@ void wtf_settings_init(wtf_settings* settings)
     settings->settings_received = false;
 }
 
-
-
 bool wtf_settings_send(wtf_connection* conn)
 {
     if (!conn || !conn->control_stream || !conn->control_stream->quic_stream) {
@@ -79,7 +77,7 @@ bool wtf_settings_decode_frame(wtf_connection* conn, const uint8_t* data, size_t
     while (offset < data_len) {
         uint64_t setting_id, setting_value;
 
-        if (!wtf_varint_decode((uint16_t) data_len, data, &offset, &setting_id)) {
+        if (!wtf_varint_decode((uint16_t)data_len, data, &offset, &setting_id)) {
             WTF_LOG_ERROR(conn->server->context, "http3",
                           "Failed to decode setting ID at offset %zu", offset);
             return false;

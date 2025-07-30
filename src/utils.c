@@ -1,9 +1,11 @@
 #include "utils.h"
-#include "wtf_version.h"
+
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "wtf_version.h"
 
 #ifdef _WIN32
     #include <bcrypt.h>
@@ -313,49 +315,48 @@ wtf_version_info_t* wtf_get_version()
 const char* wtf_webtransport_error_to_string(uint32_t error_code)
 {
     switch (error_code) {
-    case 0x00:
-        return "No error";
-    case 0x01:
-        return "General protocol error";
-    case 0x02:
-        return "Internal error";
-    case 0x03:
-        return "Connection error";
-    case 0x04:
-        return "Flow control error";
-    case 0x05:
-        return "Stream limit error";
-    case 0x06:
-        return "Stream state error";
-    case 0x07:
-        return "Final size error";
-    case 0x08:
-        return "Frame encoding error";
-    case 0x09:
-        return "Transport parameter error";
-    case 0x0A:
-        return "Connection ID limit error";
-    case 0x0B:
-        return "Protocol violation";
-    case 0x0C:
-        return "Invalid token";
-    case 0x0D:
-        return "Application error";
-    case 0x0E:
-        return "Crypto buffer exceeded";
-    case 0x0F:
-        return "Key update error";
-    case 0x10:
-        return "Aead limit reached";
-    case 0x11:
-        return "No viable path";
-    default:
-        return "Unknown error";
+        case 0x00:
+            return "No error";
+        case 0x01:
+            return "General protocol error";
+        case 0x02:
+            return "Internal error";
+        case 0x03:
+            return "Connection error";
+        case 0x04:
+            return "Flow control error";
+        case 0x05:
+            return "Stream limit error";
+        case 0x06:
+            return "Stream state error";
+        case 0x07:
+            return "Final size error";
+        case 0x08:
+            return "Frame encoding error";
+        case 0x09:
+            return "Transport parameter error";
+        case 0x0A:
+            return "Connection ID limit error";
+        case 0x0B:
+            return "Protocol violation";
+        case 0x0C:
+            return "Invalid token";
+        case 0x0D:
+            return "Application error";
+        case 0x0E:
+            return "Crypto buffer exceeded";
+        case 0x0F:
+            return "Key update error";
+        case 0x10:
+            return "Aead limit reached";
+        case 0x11:
+            return "No viable path";
+        default:
+            return "Unknown error";
     }
 }
 
-wtf_result_t wtf_get_error_details(uint32_t error_code,
-    wtf_error_details_t* details)
+wtf_result_t wtf_get_error_details(uint32_t error_code, wtf_error_details_t* details)
 {
     if (!details) {
         return WTF_ERROR_INVALID_PARAMETER;
@@ -370,54 +371,53 @@ wtf_result_t wtf_get_error_details(uint32_t error_code,
     return WTF_SUCCESS;
 }
 
-
 const char* wtf_http3_error_to_string(uint64_t http3_error)
 {
     switch (http3_error) {
-    case WTF_H3_NO_ERROR:
-        return "HTTP3_NO_ERROR";
-    case WTF_H3_GENERAL_PROTOCOL_ERROR:
-        return "HTTP3_GENERAL_PROTOCOL_ERROR";
-    case WTF_H3_INTERNAL_ERROR:
-        return "HTTP3_INTERNAL_ERROR";
-    case WTF_H3_STREAM_CREATION_ERROR:
-        return "HTTP3_STREAM_CREATION_ERROR";
-    case WTF_H3_CLOSED_CRITICAL_STREAM:
-        return "HTTP3_CLOSED_CRITICAL_STREAM";
-    case WTF_H3_FRAME_UNEXPECTED:
-        return "HTTP3_FRAME_UNEXPECTED";
-    case WTF_H3_FRAME_ERROR:
-        return "HTTP3_FRAME_ERROR";
-    case WTF_H3_EXCESSIVE_LOAD:
-        return "HTTP3_EXCESSIVE_LOAD";
-    case WTF_H3_ID_ERROR:
-        return "HTTP3_ID_ERROR";
-    case WTF_H3_SETTINGS_ERROR:
-        return "HTTP3_SETTINGS_ERROR";
-    case WTF_H3_MISSING_SETTINGS:
-        return "HTTP3_MISSING_SETTINGS";
-    case WTF_H3_REQUEST_REJECTED:
-        return "HTTP3_REQUEST_REJECTED";
-    case WTF_H3_REQUEST_CANCELLED:
-        return "HTTP3_REQUEST_CANCELLED";
-    case WTF_H3_REQUEST_INCOMPLETE:
-        return "HTTP3_REQUEST_INCOMPLETE";
-    case WTF_H3_MESSAGE_ERROR:
-        return "HTTP3_MESSAGE_ERROR";
-    case WTF_H3_CONNECT_ERROR:
-        return "HTTP3_CONNECT_ERROR";
-    case WTF_H3_VERSION_FALLBACK:
-        return "HTTP3_VERSION_FALLBACK";
-    case WTF_QPACK_DECOMPRESSION_FAILED:
-        return "QPACK_DECOMPRESSION_FAILED";
-    case WTF_QPACK_ENCODER_STREAM_ERROR:
-        return "QPACK_ENCODER_STREAM_ERROR";
-    case WTF_QPACK_DECODER_STREAM_ERROR:
-        return "QPACK_DECODER_STREAM_ERROR";
-    case WTF_H3_DATAGRAM_ERROR:
-        return "H3_DATAGRAM_ERROR";
-    default:
-        return "Unknown HTTP/3 error";
+        case WTF_H3_NO_ERROR:
+            return "HTTP3_NO_ERROR";
+        case WTF_H3_GENERAL_PROTOCOL_ERROR:
+            return "HTTP3_GENERAL_PROTOCOL_ERROR";
+        case WTF_H3_INTERNAL_ERROR:
+            return "HTTP3_INTERNAL_ERROR";
+        case WTF_H3_STREAM_CREATION_ERROR:
+            return "HTTP3_STREAM_CREATION_ERROR";
+        case WTF_H3_CLOSED_CRITICAL_STREAM:
+            return "HTTP3_CLOSED_CRITICAL_STREAM";
+        case WTF_H3_FRAME_UNEXPECTED:
+            return "HTTP3_FRAME_UNEXPECTED";
+        case WTF_H3_FRAME_ERROR:
+            return "HTTP3_FRAME_ERROR";
+        case WTF_H3_EXCESSIVE_LOAD:
+            return "HTTP3_EXCESSIVE_LOAD";
+        case WTF_H3_ID_ERROR:
+            return "HTTP3_ID_ERROR";
+        case WTF_H3_SETTINGS_ERROR:
+            return "HTTP3_SETTINGS_ERROR";
+        case WTF_H3_MISSING_SETTINGS:
+            return "HTTP3_MISSING_SETTINGS";
+        case WTF_H3_REQUEST_REJECTED:
+            return "HTTP3_REQUEST_REJECTED";
+        case WTF_H3_REQUEST_CANCELLED:
+            return "HTTP3_REQUEST_CANCELLED";
+        case WTF_H3_REQUEST_INCOMPLETE:
+            return "HTTP3_REQUEST_INCOMPLETE";
+        case WTF_H3_MESSAGE_ERROR:
+            return "HTTP3_MESSAGE_ERROR";
+        case WTF_H3_CONNECT_ERROR:
+            return "HTTP3_CONNECT_ERROR";
+        case WTF_H3_VERSION_FALLBACK:
+            return "HTTP3_VERSION_FALLBACK";
+        case WTF_QPACK_DECOMPRESSION_FAILED:
+            return "QPACK_DECOMPRESSION_FAILED";
+        case WTF_QPACK_ENCODER_STREAM_ERROR:
+            return "QPACK_ENCODER_STREAM_ERROR";
+        case WTF_QPACK_DECODER_STREAM_ERROR:
+            return "QPACK_DECODER_STREAM_ERROR";
+        case WTF_H3_DATAGRAM_ERROR:
+            return "H3_DATAGRAM_ERROR";
+        default:
+            return "Unknown HTTP/3 error";
     }
 }
 

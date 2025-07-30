@@ -2,8 +2,8 @@
 #define WTF_LOG_H
 
 #ifdef WTF_ENABLE_LOGGING
-    #include "wtf.h"
     #include "types.h"
+    #include "wtf.h"
 #endif
 
 #ifdef __cplusplus

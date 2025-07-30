@@ -1,4 +1,3 @@
-
 #ifndef WTF_UTILS_H
 #define WTF_UTILS_H
 

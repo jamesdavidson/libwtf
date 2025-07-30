@@ -1,7 +1,7 @@
 #include "qpack.h"
 
-#include "lsxpack_header.h"
 #include "log.h"
+#include "lsxpack_header.h"
 #include "utils.h"
 
 static void wtf_qpack_unblocked(void* context)
@@ -453,8 +453,9 @@ wtf_result_t wtf_qpack_send_encoder_data(wtf_connection* conn)
 
     size_t bytes_to_send = send_buffer->Length;
 
-    QUIC_STATUS status = ctx->quic_api->StreamSend(conn->peer_encoder_stream->quic_stream, send_buffer, 1,
-                                                   QUIC_SEND_FLAG_NONE, send_buffer_raw);
+    QUIC_STATUS status = ctx->quic_api->StreamSend(
+        conn->peer_encoder_stream->quic_stream, send_buffer, 1, QUIC_SEND_FLAG_NONE,
+        send_buffer_raw);
 
     if (QUIC_SUCCEEDED(status)) {
         WTF_LOG_TRACE(ctx, "qpack", "Sent %zu bytes of encoder data", bytes_to_send);

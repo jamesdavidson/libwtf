@@ -13,7 +13,7 @@ static bool wtf_stream_parse_unidirectional_header(const uint8_t* data, size_t d
 
     uint16_t offset = 0;
     uint64_t stream_type;
-    
+
     if (!wtf_varint_decode((uint16_t)data_len, data, &offset, &stream_type)) {
         return false;
     }
@@ -38,7 +38,7 @@ static bool wtf_stream_parse_bidirectional_header(const uint8_t* data, size_t da
 
     uint16_t offset = 0;
     uint64_t frame_type;
-    
+
     if (!wtf_varint_decode((uint16_t)data_len, data, &offset, &frame_type)) {
         return false;
     }
@@ -61,9 +61,11 @@ bool wtf_stream_belongs_to_session(uint64_t stream_id, uint64_t session_id,
     bool parse_success = false;
 
     if (WTF_STREAM_IS_UNIDIRECTIONAL(stream_id)) {
-        parse_success = wtf_stream_parse_unidirectional_header(stream_data, data_len, &parsed_session_id);
+        parse_success = wtf_stream_parse_unidirectional_header(
+            stream_data, data_len, &parsed_session_id);
     } else {
-        parse_success = wtf_stream_parse_bidirectional_header(stream_data, data_len, &parsed_session_id);
+        parse_success = wtf_stream_parse_bidirectional_header(
+            stream_data, data_len, &parsed_session_id);
     }
 
     return parse_success && (parsed_session_id == session_id);
@@ -106,8 +108,8 @@ void wtf_stream_destroy(wtf_stream* stream)
     free(stream);
 }
 
-static wtf_result_t wtf_stream_encode_header(wtf_stream* stream, uint8_t* header, size_t header_size,
-                                             size_t* header_length)
+static wtf_result_t wtf_stream_encode_header(wtf_stream* stream, uint8_t* header,
+                                             size_t header_size, size_t* header_length)
 {
     uint8_t* current_pos = header;
     uint8_t* header_end = header + header_size;
@@ -137,8 +139,9 @@ static wtf_result_t wtf_stream_send_header(wtf_stream* stream, HQUIC Stream)
 {
     uint8_t header[32];
     size_t header_length = 0;
-    
-    wtf_result_t encode_result = wtf_stream_encode_header(stream, header, sizeof(header), &header_length);
+
+    wtf_result_t encode_result = wtf_stream_encode_header(
+        stream, header, sizeof(header), &header_length);
     if (encode_result != WTF_SUCCESS) {
         return encode_result;
     }
@@ -170,10 +173,9 @@ static wtf_result_t wtf_stream_send_header(wtf_stream* stream, HQUIC Stream)
         return wtf_quic_status_to_result(status);
     }
 
-    WTF_LOG_INFO(conn->server->context, "webtransport",
-                 "WebTransport stream %llu header sent",
+    WTF_LOG_INFO(conn->server->context, "webtransport", "WebTransport stream %llu header sent",
                  (unsigned long long)stream->stream_id);
-    
+
     return WTF_SUCCESS;
 }
 
@@ -184,10 +186,10 @@ static bool wtf_stream_update_session_map(wtf_stream* stream, uint64_t stream_id
     if (stream_map_get(&stream->session->streams, UINT64_MAX).data != NULL) {
         stream_map_erase(&stream->session->streams, UINT64_MAX);
     }
-    
+
     stream_map_itr itr = stream_map_insert(&stream->session->streams, stream_id, stream);
     bool success = !stream_map_is_end(itr);
-    
+
     mtx_unlock(&stream->session->streams_mutex);
     return success;
 }
@@ -202,12 +204,8 @@ static void wtf_stream_notify_opened(wtf_stream* stream)
         .type = WTF_SESSION_EVENT_STREAM_OPENED,
         .session = stream->session,
         .user_context = stream->user_context,
-        .stream_opened = {
-            .stream = (wtf_stream_t*)stream,
-            .stream_type = stream->type
-        }
-    };
-    
+        .stream_opened = {.stream = (wtf_stream_t*)stream, .stream_type = stream->type}};
+
     stream->session->callback(&event);
 }
 
@@ -226,8 +224,7 @@ static void wtf_stream_handle_reset(wtf_stream* stream, QUIC_UINT62 error_code)
             .type = WTF_STREAM_EVENT_ABORTED,
             .stream = (wtf_stream_t*)stream,
             .user_context = stream->user_context,
-            .aborted = {.error_code = wtf_map_h3_error_to_webtransport(error_code)}
-        };
+            .aborted = {.error_code = wtf_map_h3_error_to_webtransport(error_code)}};
         stream->callback(&event);
     }
 }
@@ -235,9 +232,9 @@ static void wtf_stream_handle_reset(wtf_stream* stream, QUIC_UINT62 error_code)
 static bool wtf_stream_should_receive(wtf_stream* stream)
 {
     mtx_lock(&stream->mutex);
-    bool should_receive = stream->receive_enabled && 
-                         stream->state != WTF_INTERNAL_STREAM_STATE_CLOSED &&
-                         stream->state != WTF_INTERNAL_STREAM_STATE_RESET;
+    bool should_receive = stream->receive_enabled
+        && stream->state != WTF_INTERNAL_STREAM_STATE_CLOSED
+        && stream->state != WTF_INTERNAL_STREAM_STATE_RESET;
     mtx_unlock(&stream->mutex);
     return should_receive;
 }
@@ -265,12 +262,9 @@ static void wtf_stream_cleanup_send_context(wtf_stream* stream, wtf_internal_sen
             .type = WTF_STREAM_EVENT_SEND_COMPLETE,
             .stream = (wtf_stream_t*)stream,
             .user_context = stream->user_context,
-            .send_complete = {
-                .buffers = send_ctx->buffers,
-                .buffer_count = send_ctx->count,
-                .cancelled = cancelled
-            }
-        };
+            .send_complete = {.buffers = send_ctx->buffers,
+                              .buffer_count = send_ctx->count,
+                              .cancelled = cancelled}};
         stream->callback(&event);
     } else {
         for (uint32_t i = 0; i < send_ctx->count; i++) {
@@ -288,20 +282,18 @@ static QUIC_STATUS wtf_handle_stream_start_complete(wtf_stream* stream, HQUIC St
                                                     QUIC_STREAM_EVENT* Event)
 {
     wtf_connection* conn = stream->session->connection;
-    
+
     WTF_LOG_DEBUG(conn->server->context, "webtransport",
-                  "WebTransport stream start complete, status=0x%x",
-                  Event->START_COMPLETE.Status);
+                  "WebTransport stream start complete, status=0x%x", Event->START_COMPLETE.Status);
 
     if (QUIC_FAILED(Event->START_COMPLETE.Status)) {
         WTF_LOG_ERROR(conn->server->context, "webtransport",
-                      "WebTransport stream start failed: 0x%x",
-                      Event->START_COMPLETE.Status);
+                      "WebTransport stream start failed: 0x%x", Event->START_COMPLETE.Status);
         return QUIC_STATUS_SUCCESS;
     }
 
     uint64_t stream_id = Event->START_COMPLETE.ID;
-    
+
     mtx_lock(&stream->mutex);
     stream->stream_id = stream_id;
     stream->state = WTF_INTERNAL_STREAM_STATE_OPEN;
@@ -311,25 +303,21 @@ static QUIC_STATUS wtf_handle_stream_start_complete(wtf_stream* stream, HQUIC St
         WTF_LOG_ERROR(conn->server->context, "webtransport",
                       "Failed to add WebTransport stream to session map");
         conn->server->context->quic_api->StreamShutdown(
-            Stream,
-            QUIC_STREAM_SHUTDOWN_FLAG_ABORT_SEND | QUIC_STREAM_SHUTDOWN_FLAG_ABORT_RECEIVE,
+            Stream, QUIC_STREAM_SHUTDOWN_FLAG_ABORT_SEND | QUIC_STREAM_SHUTDOWN_FLAG_ABORT_RECEIVE,
             WTF_H3_INTERNAL_ERROR);
         return QUIC_STATUS_SUCCESS;
     }
 
     wtf_result_t header_result = wtf_stream_send_header(stream, Stream);
     if (header_result != WTF_SUCCESS) {
-        WTF_LOG_ERROR(conn->server->context, "webtransport",
-                      "Failed to send stream header");
+        WTF_LOG_ERROR(conn->server->context, "webtransport", "Failed to send stream header");
         conn->server->context->quic_api->StreamShutdown(
-            Stream,
-            QUIC_STREAM_SHUTDOWN_FLAG_ABORT_SEND | QUIC_STREAM_SHUTDOWN_FLAG_ABORT_RECEIVE,
+            Stream, QUIC_STREAM_SHUTDOWN_FLAG_ABORT_SEND | QUIC_STREAM_SHUTDOWN_FLAG_ABORT_RECEIVE,
             WTF_H3_INTERNAL_ERROR);
         return QUIC_STATUS_SUCCESS;
     }
 
-    WTF_LOG_INFO(conn->server->context, "webtransport", 
-                 "WebTransport stream %llu (%s) ready",
+    WTF_LOG_INFO(conn->server->context, "webtransport", "WebTransport stream %llu (%s) ready",
                  (unsigned long long)stream_id,
                  stream->type == WTF_STREAM_BIDIRECTIONAL ? "bidirectional" : "unidirectional");
 
@@ -340,7 +328,7 @@ static QUIC_STATUS wtf_handle_stream_start_complete(wtf_stream* stream, HQUIC St
 static QUIC_STATUS wtf_handle_stream_receive(wtf_stream* stream, QUIC_STREAM_EVENT* Event)
 {
     wtf_connection* conn = stream->session->connection;
-    
+
     WTF_LOG_DEBUG(conn->server->context, "webtransport",
                   "WebTransport stream data received on stream %llu",
                   (unsigned long long)stream->stream_id);
@@ -356,12 +344,9 @@ static QUIC_STATUS wtf_handle_stream_receive(wtf_stream* stream, QUIC_STREAM_EVE
             .type = WTF_STREAM_EVENT_DATA_RECEIVED,
             .stream = (wtf_stream_t*)stream,
             .user_context = stream->user_context,
-            .data_received = {
-                .buffers = (wtf_buffer_t*)Event->RECEIVE.Buffers,
-                .buffer_count = Event->RECEIVE.BufferCount,
-                .fin = fin
-            }
-        };
+            .data_received = {.buffers = (wtf_buffer_t*)Event->RECEIVE.Buffers,
+                              .buffer_count = Event->RECEIVE.BufferCount,
+                              .fin = fin}};
         stream->callback(&event);
     }
 
@@ -374,7 +359,8 @@ static QUIC_STATUS wtf_handle_stream_send_complete(wtf_stream* stream, QUIC_STRE
                   "WebTransport stream send complete on stream %llu",
                   (unsigned long long)stream->stream_id);
 
-    wtf_internal_send_context* send_ctx = (wtf_internal_send_context*)Event->SEND_COMPLETE.ClientContext;
+    wtf_internal_send_context* send_ctx
+        = (wtf_internal_send_context*)Event->SEND_COMPLETE.ClientContext;
     if (send_ctx) {
         wtf_stream_cleanup_send_context(stream, send_ctx, Event->SEND_COMPLETE.Canceled);
     }
@@ -391,11 +377,9 @@ static QUIC_STATUS wtf_handle_stream_peer_shutdown(wtf_stream* stream)
     wtf_stream_update_state_on_shutdown(stream);
 
     if (stream->callback) {
-        wtf_stream_event_t event = {
-            .type = WTF_STREAM_EVENT_PEER_CLOSED,
-            .stream = (wtf_stream_t*)stream,
-            .user_context = stream->user_context
-        };
+        wtf_stream_event_t event = {.type = WTF_STREAM_EVENT_PEER_CLOSED,
+                                    .stream = (wtf_stream_t*)stream,
+                                    .user_context = stream->user_context};
         stream->callback(&event);
     }
 
@@ -405,7 +389,7 @@ static QUIC_STATUS wtf_handle_stream_peer_shutdown(wtf_stream* stream)
 static QUIC_STATUS wtf_handle_stream_peer_aborted(wtf_stream* stream, QUIC_STREAM_EVENT* Event)
 {
     QUIC_UINT62 error_code = Event->PEER_SEND_ABORTED.ErrorCode;
-    
+
     WTF_LOG_DEBUG(stream->session->connection->server->context, "webtransport",
                   "WebTransport stream peer send aborted on stream %llu: 0x%x",
                   (unsigned long long)stream->stream_id, error_code);
@@ -421,11 +405,9 @@ static QUIC_STATUS wtf_handle_stream_shutdown_complete(wtf_stream* stream)
                   (unsigned long long)stream->stream_id);
 
     if (stream->callback) {
-        wtf_stream_event_t event = {
-            .type = WTF_STREAM_EVENT_CLOSED,
-            .stream = (wtf_stream_t*)stream,
-            .user_context = stream->user_context
-        };
+        wtf_stream_event_t event = {.type = WTF_STREAM_EVENT_CLOSED,
+                                    .stream = (wtf_stream_t*)stream,
+                                    .user_context = stream->user_context};
         stream->callback(&event);
     }
 
@@ -442,8 +424,9 @@ QUIC_STATUS QUIC_API wtf_upgraded_stream_callback(HQUIC Stream, void* Context,
 {
     wtf_stream* wt_stream = (wtf_stream*)Context;
 
-    if (!wt_stream || !wt_stream->session || !wt_stream->session->connection ||
-        !wt_stream->session->connection->server || !wt_stream->session->connection->server->context) {
+    if (!wt_stream || !wt_stream->session || !wt_stream->session->connection
+        || !wt_stream->session->connection->server
+        || !wt_stream->session->connection->server->context) {
         return QUIC_STATUS_INTERNAL_ERROR;
     }
 
@@ -536,8 +519,8 @@ static wtf_result_t wtf_stream_validate_send_params(wtf_stream* stream, const wt
         return WTF_ERROR_INVALID_PARAMETER;
     }
 
-    if (stream->state == WTF_INTERNAL_STREAM_STATE_CLOSED ||
-        stream->state == WTF_INTERNAL_STREAM_STATE_RESET) {
+    if (stream->state == WTF_INTERNAL_STREAM_STATE_CLOSED
+        || stream->state == WTF_INTERNAL_STREAM_STATE_RESET) {
         return WTF_ERROR_INVALID_STATE;
     }
 
@@ -598,8 +581,8 @@ wtf_result_t wtf_stream_abort(wtf_stream_t* stream, uint32_t error_code)
     wtf_stream* strm = (wtf_stream*)stream;
 
     WTF_LOG_DEBUG(strm->session->connection->server->context, "stream",
-        "Aborting stream %llu with error %u",
-        (unsigned long long)strm->stream_id, error_code);
+                  "Aborting stream %llu with error %u", (unsigned long long)strm->stream_id,
+                  error_code);
 
     mtx_lock(&strm->mutex);
     strm->state = WTF_INTERNAL_STREAM_STATE_RESET;
@@ -614,10 +597,10 @@ wtf_result_t wtf_stream_abort(wtf_stream_t* stream, uint32_t error_code)
     }
 
     if (strm->callback) {
-        wtf_stream_event_t event = { .type = WTF_STREAM_EVENT_ABORTED,
-            .stream = stream,
-            .user_context = strm->user_context,
-            .aborted = { .error_code = error_code } };
+        wtf_stream_event_t event = {.type = WTF_STREAM_EVENT_ABORTED,
+                                    .stream = stream,
+                                    .user_context = strm->user_context,
+                                    .aborted = {.error_code = error_code}};
         strm->callback(&event);
     }
 
@@ -633,7 +616,8 @@ wtf_result_t wtf_stream_close(wtf_stream_t* stream)
     wtf_stream* strm = (wtf_stream*)stream;
 
     mtx_lock(&strm->mutex);
-    if (strm->state == WTF_INTERNAL_STREAM_STATE_CLOSED || strm->state == WTF_INTERNAL_STREAM_STATE_RESET) {
+    if (strm->state == WTF_INTERNAL_STREAM_STATE_CLOSED
+        || strm->state == WTF_INTERNAL_STREAM_STATE_RESET) {
         mtx_unlock(&strm->mutex);
         return WTF_ERROR_INVALID_STATE;
     }
@@ -641,7 +625,7 @@ wtf_result_t wtf_stream_close(wtf_stream_t* stream)
     strm->state = WTF_INTERNAL_STREAM_STATE_HALF_CLOSED_LOCAL;
     mtx_unlock(&strm->mutex);
 
-    wtf_buffer_t empty_buffer = { 0, NULL };
+    wtf_buffer_t empty_buffer = {0, NULL};
     return wtf_stream_send(strm, &empty_buffer, 1, true);
 }
 
@@ -674,15 +658,15 @@ wtf_stream_state_t wtf_stream_get_state(wtf_stream_t* stream)
     mtx_unlock(&strm->mutex);
 
     switch (internal_state) {
-    case WTF_INTERNAL_STREAM_STATE_IDLE:
-    case WTF_INTERNAL_STREAM_STATE_OPEN:
-    case WTF_INTERNAL_STREAM_STATE_HALF_CLOSED_REMOTE:
-        return WTF_STREAM_OPEN;
-    case WTF_INTERNAL_STREAM_STATE_HALF_CLOSED_LOCAL:
-        return WTF_STREAM_CLOSING;
-    case WTF_INTERNAL_STREAM_STATE_CLOSED:
-    case WTF_INTERNAL_STREAM_STATE_RESET:
-    default:
-        return WTF_STREAM_CLOSED;
+        case WTF_INTERNAL_STREAM_STATE_IDLE:
+        case WTF_INTERNAL_STREAM_STATE_OPEN:
+        case WTF_INTERNAL_STREAM_STATE_HALF_CLOSED_REMOTE:
+            return WTF_STREAM_OPEN;
+        case WTF_INTERNAL_STREAM_STATE_HALF_CLOSED_LOCAL:
+            return WTF_STREAM_CLOSING;
+        case WTF_INTERNAL_STREAM_STATE_CLOSED:
+        case WTF_INTERNAL_STREAM_STATE_RESET:
+        default:
+            return WTF_STREAM_CLOSED;
     }
 }

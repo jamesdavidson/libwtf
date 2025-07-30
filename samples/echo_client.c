@@ -1,8 +1,10 @@
-#include "wtf.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "wtf.h"
+
 /*
 static volatile bool g_connected = false;
 static volatile bool g_stream_open = false;
@@ -14,8 +16,8 @@ void client_callback(const wt_event_t* event, void* user_data) {
     switch (event->type) {
         case WT_EVENT_SESSION_CONNECTED:
             printf("Connected to server! Subprotocol: %s\n",
-                   event->session_connected.subprotocol ? event->session_connected.subprotocol : "none");
-            g_connected = true;
+                   event->session_connected.subprotocol ? event->session_connected.subprotocol :
+"none"); g_connected = true;
 
             // Create a bidirectional stream
             printf("Creating bidirectional stream...\n");
@@ -52,10 +54,8 @@ void client_callback(const wt_event_t* event, void* user_data) {
         case WT_EVENT_SESSION_DISCONNECTED:
             printf("Disconnected from server: error_code=%u, reason=%s\n",
                    event->session_disconnected.error_code,
-                   event->session_disconnected.reason ? event->session_disconnected.reason : "unknown");
-            g_connected = false;
-            g_stream_open = false;
-            break;
+                   event->session_disconnected.reason ? event->session_disconnected.reason :
+"unknown"); g_connected = false; g_stream_open = false; break;
 
         case WT_EVENT_DATAGRAM_RECEIVED:
             printf("Datagram received: %.*s\n",
@@ -207,12 +207,9 @@ int main(int argc, char* argv[]) {
         wt_session_t* session = wt_client_get_session(client);
         if (session) {
             const char* dgram_msg = "Datagram test message";
-            result = wt_session_send_datagram(session, (const uint8_t*)dgram_msg, strlen(dgram_msg), NULL);
-            if (result == WT_SUCCESS) {
-                printf("Datagram sent: %s\n", dgram_msg);
-                usleep(500000); // Wait 500ms for response
-            } else {
-                printf("Failed to send datagram: %s\n", wt_error_string(result));
+            result = wt_session_send_datagram(session, (const uint8_t*)dgram_msg, strlen(dgram_msg),
+NULL); if (result == WT_SUCCESS) { printf("Datagram sent: %s\n", dgram_msg); usleep(500000); // Wait
+500ms for response } else { printf("Failed to send datagram: %s\n", wt_error_string(result));
             }
         }
     }
@@ -235,7 +232,7 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 */
-int main(int argc, char const* argv[])
+int main(int argc, const char* argv[])
 {
     /* code */
     return 0;

@@ -1,9 +1,9 @@
-#include "wtf.h"
+#include <msquic.h>
 
 #include "log.h"
 #include "types.h"
 #include "utils.h"
-#include <msquic.h>
+#include "wtf.h"
 
 wtf_result_t wtf_context_create(const wtf_context_config_t* config, wtf_context_t** context)
 {
@@ -95,8 +95,7 @@ void wtf_context_destroy(wtf_context_t* context)
     free(context);
 }
 
-wtf_result_t wtf_context_set_log_level(wtf_context_t* context,
-    wtf_log_level_t level)
+wtf_result_t wtf_context_set_log_level(wtf_context_t* context, wtf_log_level_t level)
 {
     if (!context) {
         return WTF_ERROR_INVALID_PARAMETER;

@@ -506,24 +506,22 @@ wtf_result_t wtf_session_drain(wtf_session_t* session)
         return WTF_ERROR_INVALID_STATE;
     }
 
-    WTF_LOG_INFO(sess->connection->server->context, "session",
-        "Draining session %llu", (unsigned long long)sess->id);
+    WTF_LOG_INFO(sess->connection->server->context, "session", "Draining session %llu",
+                 (unsigned long long)sess->id);
 
     sess->state = WTF_SESSION_DRAINING;
 
     if (sess->callback) {
-        wtf_session_event_t event = { .type = WTF_SESSION_EVENT_DRAINING,
-            .session = session,
-            .user_context = sess->user_context };
+        wtf_session_event_t event = {.type = WTF_SESSION_EVENT_DRAINING,
+                                     .session = session,
+                                     .user_context = sess->user_context};
         sess->callback(&event);
     }
 
-    return wtf_session_send_capsule(sess, WTF_CAPSULE_DRAIN_WEBTRANSPORT_SESSION,
-        NULL, 0);
+    return wtf_session_send_capsule(sess, WTF_CAPSULE_DRAIN_WEBTRANSPORT_SESSION, NULL, 0);
 }
 
-wtf_stream_t* wtf_session_find_stream_by_id(wtf_session_t* session,
-    uint64_t stream_id)
+wtf_stream_t* wtf_session_find_stream_by_id(wtf_session_t* session, uint64_t stream_id)
 {
     if (!session)
         return NULL;
@@ -542,9 +540,8 @@ wtf_stream_t* wtf_session_find_stream_by_id(wtf_session_t* session,
     return (wtf_stream_t*)stream;
 }
 
-wtf_result_t wtf_session_get_peer_address(wtf_session_t* session,
-    void* address_buffer,
-    size_t* buffer_size)
+wtf_result_t wtf_session_get_peer_address(wtf_session_t* session, void* address_buffer,
+                                          size_t* buffer_size)
 {
     if (!session || !buffer_size) {
         return WTF_ERROR_INVALID_PARAMETER;
@@ -559,7 +556,7 @@ wtf_result_t wtf_session_get_peer_address(wtf_session_t* session,
 
     if (address_buffer) {
         memcpy(address_buffer, &sess->connection->peer_address,
-            sizeof(sess->connection->peer_address));
+               sizeof(sess->connection->peer_address));
     }
     *buffer_size = sizeof(sess->connection->peer_address);
 
