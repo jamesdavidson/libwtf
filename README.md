@@ -31,9 +31,12 @@ The implementation provides comprehensive error handling with detailed diagnosti
 # Build from source
 git clone https://github.com/andrewmd5/libwtf.git
 cd libwtf
-mkdir build 
-cd build && cmake ..
-make
+# macOS / Linux
+ cmake -DWTF_BUILD_SAMPLES=on -S . -B build -G "Ninja Multi-Config"
+# Windows
+ cmake -S . -B build -G "Visual Studio 17 2022"
+
+ cmake --build build --config Release
 ```
 
 ## Quick Start
@@ -161,7 +164,7 @@ Included with libwtf is a complete echo server that demonstrates session managem
 
 ## Build Requirements
 
-- C17 compatible compiler
+- C11 compatible compiler
 - [MsQuic](https://github.com/microsoft/msquic)
 - [OpenSSL](https://github.com/openssl/openssl)
 
