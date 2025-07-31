@@ -490,6 +490,15 @@ void wtf_stream_set_context(wtf_stream_t* stream, void* user_context)
     ((wtf_stream*)stream)->user_context = user_context;
 }
 
+void* wtf_stream_get_context(wtf_stream_t* stream)
+{
+    if (!stream) {
+        return NULL;
+    }
+    return ((wtf_stream*)stream)->user_context;
+}
+
+
 void wtf_stream_set_callback(wtf_stream_t* stream, wtf_stream_callback_t callback)
 {
     if (!stream) {

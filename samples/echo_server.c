@@ -31,6 +31,8 @@
 static volatile bool g_running = true;
 static wtf_server_t* g_server = NULL;
 static wtf_context_t* g_context = NULL;
+void stream_callback(const wtf_stream_event_t* event);
+void session_callback(const wtf_session_event_t* event);
 
 typedef struct {
     uint64_t sessions_created;
@@ -61,6 +63,8 @@ typedef struct stream_context {
     wtf_session_t* session;
     time_t created_time;
     bool is_server_initiated;
+    bool needs_welcome;
+    char stream_type[32];
 } stream_context_t;
 
 typedef enum {
@@ -198,19 +202,23 @@ wtf_result_t handle_request_stream(wtf_session_t* session, const char* stream_ty
     if (result == WTF_SUCCESS) {
         g_stats.server_streams_created++;
 
-        char welcome_msg[256];
-        int msg_len = snprintf(welcome_msg, sizeof(welcome_msg),
-                               "SERVER_STREAM_CREATED:type=%s,timestamp=%" PRIu64, stream_type,
-                               get_timestamp_ms());
+        // Create stream context and mark it as needing welcome message
+        stream_context_t* stream_ctx = malloc(sizeof(stream_context_t));
+        if (stream_ctx) {
+            stream_ctx->stream = stream;
+            stream_ctx->stream_id = (uint32_t)(g_stats.streams_created + 1);
+            stream_ctx->session = session;
+            stream_ctx->created_time = time(NULL);
+            stream_ctx->is_server_initiated = true;
+            stream_ctx->needs_welcome = true;
+            strncpy(stream_ctx->stream_type, stream_type, sizeof(stream_ctx->stream_type) - 1);
+            stream_ctx->stream_type[sizeof(stream_ctx->stream_type) - 1] = '\0';
 
-        if (msg_len > 0 && msg_len < (int)sizeof(welcome_msg)) {
-            wtf_buffer_t buffer = {.data = (uint8_t*)welcome_msg, .length = (size_t)msg_len};
-
-            wtf_stream_send(stream, &buffer, 1, false);
-            g_stats.bytes_sent += buffer.length;
-
-            printf("[CMD] Server stream created and welcome message sent\n");
+            wtf_stream_set_context(stream, stream_ctx);
         }
+
+        wtf_stream_set_callback(stream, stream_callback);
+        printf("[CMD] Server stream created, waiting for open event\n");
     } else {
         printf("[CMD] Failed to create server stream: %s\n", wtf_result_to_string(result));
     }
@@ -220,32 +228,43 @@ wtf_result_t handle_request_stream(wtf_session_t* session, const char* stream_ty
 
 wtf_result_t handle_ping(wtf_session_t* session, const char* ping_data)
 {
-    char pong_response[512];
     uint64_t timestamp = get_timestamp_ms();
-
-    int msg_len = snprintf(pong_response, sizeof(pong_response), "PONG_%s_server_time=%" PRIu64,
-                           ping_data, timestamp);
-
-    if (msg_len > 0 && msg_len < (int)sizeof(pong_response)) {
-        wtf_buffer_t buffer = {.data = (uint8_t*)pong_response, .length = (size_t)msg_len};
-
-        wtf_result_t result = wtf_session_send_datagram(session, &buffer, 1);
-        if (result == WTF_SUCCESS) {
-            g_stats.datagrams_sent++;
-            g_stats.bytes_sent += buffer.length;
-            printf("[CMD] PONG sent in response to PING_%s\n", ping_data);
-        }
-        return result;
+    
+    int msg_len = snprintf(NULL, 0, "PONG_%s_server_time=%" PRIu64, ping_data, timestamp);
+    if (msg_len <= 0) {
+        return WTF_ERROR_INVALID_PARAMETER;
     }
 
-    return WTF_ERROR_INVALID_PARAMETER;
+    char* pong_response = malloc(msg_len + 1);
+    if (!pong_response) {
+        return WTF_ERROR_OUT_OF_MEMORY;
+    }
+    
+    int actual_len = snprintf(pong_response, msg_len + 1, "PONG_%s_server_time=%" PRIu64,
+                             ping_data, timestamp);
+    
+    if (actual_len != msg_len) {
+        free(pong_response);
+        return WTF_ERROR_INVALID_PARAMETER;
+    }
+    
+    wtf_buffer_t buffer = {.data = (uint8_t*)pong_response, .length = (size_t)msg_len};
+    wtf_result_t result = wtf_session_send_datagram(session, &buffer, 1);
+    
+    if (result == WTF_SUCCESS) {
+        g_stats.datagrams_sent++;
+        g_stats.bytes_sent += buffer.length;
+        printf("[CMD] PONG sent in response to PING_%s\n", ping_data);
+    } else {
+         free(pong_response);
+    }
+    return result;
 }
 
 wtf_result_t handle_stats_request(wtf_session_t* session)
 {
-    char stats_response[1024];
     int msg_len = snprintf(
-        stats_response, sizeof(stats_response),
+        NULL, 0,
         "STATS:sessions=%" PRIu64 "/%" PRIu64 ",streams=%" PRIu64 "/%" PRIu64
         ",server_streams=%" PRIu64
         ","
@@ -254,20 +273,44 @@ wtf_result_t handle_stats_request(wtf_session_t* session)
         g_stats.streams_created - g_stats.streams_destroyed, g_stats.streams_created,
         g_stats.server_streams_created, g_stats.datagrams_received, g_stats.datagrams_sent,
         g_stats.bytes_received, g_stats.bytes_sent);
-
-    if (msg_len > 0 && msg_len < (int)sizeof(stats_response)) {
-        wtf_buffer_t buffer = {.data = (uint8_t*)stats_response, .length = (size_t)msg_len};
-
-        wtf_result_t result = wtf_session_send_datagram(session, &buffer, 1);
-        if (result == WTF_SUCCESS) {
-            g_stats.datagrams_sent++;
-            g_stats.bytes_sent += buffer.length;
-            printf("[CMD] Stats sent to client\n");
-        }
-        return result;
+    
+    if (msg_len <= 0) {
+        return WTF_ERROR_INVALID_PARAMETER;
     }
 
-    return WTF_ERROR_INVALID_PARAMETER;
+    char* stats_response = malloc(msg_len + 1);
+    if (!stats_response) {
+        return WTF_ERROR_OUT_OF_MEMORY;
+    }
+    
+    int actual_len = snprintf(
+        stats_response, msg_len + 1,
+        "STATS:sessions=%" PRIu64 "/%" PRIu64 ",streams=%" PRIu64 "/%" PRIu64
+        ",server_streams=%" PRIu64
+        ","
+        "datagrams_rx=%" PRIu64 ",datagrams_tx=%" PRIu64 ",bytes_rx=%" PRIu64 ",bytes_tx=%" PRIu64,
+        g_stats.sessions_created - g_stats.sessions_destroyed, g_stats.sessions_created,
+        g_stats.streams_created - g_stats.streams_destroyed, g_stats.streams_created,
+        g_stats.server_streams_created, g_stats.datagrams_received, g_stats.datagrams_sent,
+        g_stats.bytes_received, g_stats.bytes_sent);
+    
+    if (actual_len != msg_len) {
+        free(stats_response);
+        return WTF_ERROR_INVALID_PARAMETER;
+    }
+    
+    wtf_buffer_t buffer = {.data = (uint8_t*)stats_response, .length = (size_t)msg_len};
+    wtf_result_t result = wtf_session_send_datagram(session, &buffer, 1);
+    
+    if (result == WTF_SUCCESS) {
+        g_stats.datagrams_sent++;
+        g_stats.bytes_sent += buffer.length;
+        printf("[CMD] Stats sent to client\n");
+    } else {
+        free(stats_response);
+    }
+    
+    return result;
 }
 
 wtf_result_t handle_bulk_data(wtf_session_t* session, const char* bulk_info)
@@ -327,7 +370,11 @@ void stream_callback(const wtf_stream_event_t* event)
             }
             break;
         }
+
         case WTF_STREAM_EVENT_DATA_RECEIVED: {
+            if (event->data_received.fin) {
+                break;
+            }
             printf("[STREAM] Data received on stream %u\n", stream_ctx ? stream_ctx->stream_id : 0);
 
             const uint32_t buffer_count = event->data_received.buffer_count;
@@ -413,12 +460,18 @@ void stream_callback(const wtf_stream_event_t* event)
         case WTF_STREAM_EVENT_CLOSED:
             printf("[STREAM] Stream %u fully closed\n", stream_ctx ? stream_ctx->stream_id : 0);
             g_stats.streams_destroyed++;
+            if (stream_ctx) {
+                free(stream_ctx);
+            }
             break;
 
         case WTF_STREAM_EVENT_ABORTED:
             printf("[STREAM] Stream %u aborted with error %u\n",
                    stream_ctx ? stream_ctx->stream_id : 0, event->aborted.error_code);
             g_stats.streams_destroyed++;
+            if (stream_ctx) {
+                free(stream_ctx);
+            }
             break;
 
         default:
@@ -458,26 +511,29 @@ void session_callback(const wtf_session_event_t* event)
                 session_ctx->stream_count++;
             }
 
-            stream_context_t* stream_ctx = malloc(sizeof(stream_context_t));
-            if (stream_ctx) {
-                stream_ctx->stream = event->stream_opened.stream;
-                stream_ctx->stream_id = (uint32_t)g_stats.streams_created;
-                stream_ctx->session = event->session;
-                stream_ctx->created_time = time(NULL);
-                stream_ctx->is_server_initiated = (g_stats.server_streams_created > 0
-                                                   && g_stats.streams_created
-                                                       <= g_stats.server_streams_created);
+            // Get or create stream context
+            stream_context_t* stream_ctx = (stream_context_t*)wtf_stream_get_context(
+                event->stream_opened.stream);
+            if (!stream_ctx) {
+                stream_ctx = malloc(sizeof(stream_context_t));
+                if (stream_ctx) {
+                    stream_ctx->stream = event->stream_opened.stream;
+                    stream_ctx->stream_id = (uint32_t)g_stats.streams_created;
+                    stream_ctx->session = event->session;
+                    stream_ctx->created_time = time(NULL);
+                    stream_ctx->is_server_initiated = false;
+                    stream_ctx->needs_welcome = false;
+                    stream_ctx->stream_type[0] = '\0';
 
-                wtf_stream_set_context(event->stream_opened.stream, stream_ctx);
+                    wtf_stream_set_context(event->stream_opened.stream, stream_ctx);
+                }
             }
 
             wtf_stream_set_callback(event->stream_opened.stream, stream_callback);
 
-            printf(
-                "[SESSION] Stream %u configured with callbacks (server-initiated: "
-                "%s)\n",
-                stream_ctx ? stream_ctx->stream_id : 0,
-                stream_ctx && stream_ctx->is_server_initiated ? "yes" : "no");
+            printf("[SESSION] Stream %u configured (server-initiated: %s)\n",
+                   stream_ctx ? stream_ctx->stream_id : 0,
+                   stream_ctx && stream_ctx->is_server_initiated ? "yes" : "no");
             break;
         }
 
@@ -487,6 +543,9 @@ void session_callback(const wtf_session_event_t* event)
                    event->disconnected.reason ? event->disconnected.reason : "none");
 
             g_stats.sessions_destroyed++;
+            if (session_ctx) {
+                free(session_ctx);
+            }
             break;
         }
 

@@ -18,12 +18,14 @@ EXPORTS
     wtf_session_get_state
     wtf_session_get_peer_address
     wtf_session_set_context
+    wtf_session_get_context
     wtf_stream_send
     wtf_stream_close
     wtf_stream_abort
     wtf_stream_get_id
     wtf_stream_set_callback
     wtf_stream_set_context
+    wtf_stream_get_context
     wtf_stream_get_type
     wtf_stream_get_state
     wtf_stream_set_priority

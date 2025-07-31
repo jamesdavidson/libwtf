@@ -6,56 +6,83 @@
     <title>WebTransport Control Panel</title>
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #fafafa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f5f5f5;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --text-tertiary: #999999;
+            --border-light: #e5e5e5;
+            --border-medium: #d0d0d0;
+            --accent-success: #22c55e;
+            --accent-warning: #f59e0b;
+            --accent-error: #ef4444;
+            --accent-info: #3b82f6;
+            --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --radius-small: 4px;
+            --radius-medium: 8px;
+            --radius-large: 12px;
         }
 
         body {
-            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
-            background-color: #fafafa;
-            color: #1a1a1a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             line-height: 1.5;
-            font-size: 13px;
+            font-size: 14px;
         }
 
         .container {
             max-width: 1600px;
             margin: 0 auto;
             padding: 24px;
+            min-height: 100vh;
         }
 
         .header {
-            background: #ffffff;
-            border: 2px solid #000000;
-            padding: 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-large);
+            padding: 32px;
             margin-bottom: 24px;
+            box-shadow: var(--shadow-light);
         }
 
         .header h1 {
-            font-size: 18px;
-            font-weight: 700;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-primary);
             margin-bottom: 8px;
-            letter-spacing: 0.5px;
+            letter-spacing: -0.025em;
         }
 
         .header .subtitle {
-            font-size: 12px;
-            color: #666666;
+            color: var(--text-secondary);
             font-weight: 400;
         }
 
-        .main-grid {
+        .layout {
             display: grid;
             grid-template-columns: 320px 1fr;
             gap: 24px;
         }
 
         .sidebar {
-            background: #ffffff;
-            border: 2px solid #000000;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-large);
             padding: 24px;
             height: fit-content;
+            box-shadow: var(--shadow-light);
+            position: sticky;
+            top: 24px;
         }
 
         .sidebar-section {
@@ -66,230 +93,280 @@
             margin-bottom: 0;
         }
 
-        .sidebar-section h3 {
-            font-size: 14px;
-            font-weight: 700;
+        .sidebar-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
             margin-bottom: 16px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 1px solid #000000;
-            padding-bottom: 8px;
+            letter-spacing: 0.05em;
         }
 
         .connection-status {
-            padding: 16px;
+            padding: 12px 16px;
             text-align: center;
-            font-weight: 700;
-            font-size: 12px;
-            letter-spacing: 0.5px;
-            border: 2px solid #000000;
-            margin-bottom: 16px;
+            font-weight: 500;
+            font-size: 13px;
+            border-radius: var(--radius-medium);
+            margin-bottom: 24px;
+            border: 1px solid;
+            transition: all 0.2s ease;
         }
 
         .status-disconnected {
-            background-color: #ffebee;
-            color: #c62828;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border-color: var(--border-medium);
         }
 
         .status-connecting {
-            background-color: #fff3e0;
-            color: #ef6c00;
+            background: #fef3c7;
+            color: #92400e;
+            border-color: #fcd34d;
         }
 
         .status-connected {
-            background-color: #e8f5e8;
-            color: #2e7d32;
+            background: #dcfce7;
+            color: #166534;
+            border-color: #86efac;
         }
 
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
-        .form-group label {
+        .form-label {
             display: block;
-            font-size: 11px;
-            font-weight: 600;
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            color: #333333;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #000000;
-            background: #ffffff;
-            font-family: inherit;
             font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
         }
 
-        .form-group input:focus {
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-small);
+            background: var(--bg-secondary);
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
             outline: none;
-            border-color: #2196f3;
-            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+            border-color: var(--text-primary);
+            box-shadow: 0 0 0 2px rgba(26, 26, 26, 0.1);
         }
 
-        .btn-group {
+        .form-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .form-hint {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        .button-group {
             display: flex;
             gap: 8px;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
-        button {
+        .btn {
             padding: 10px 16px;
-            border: 2px solid #000000;
-            background: #ffffff;
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-small);
+            background: var(--bg-secondary);
             font-family: inherit;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
+            font-size: 13px;
+            font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s ease;
+            color: var(--text-primary);
         }
 
-        button:hover:not(:disabled) {
-            background: #f5f5f5;
+        .btn:hover:not(:disabled) {
+            background: var(--bg-tertiary);
+            border-color: var(--text-primary);
         }
 
-        button:disabled {
-            background: #e0e0e0;
+        .btn:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
-            opacity: 0.6;
         }
 
-        button.primary {
-            background: #000000;
-            color: #ffffff;
+        .btn-primary {
+            background: var(--text-primary);
+            color: var(--bg-secondary);
+            border-color: var(--text-primary);
         }
 
-        button.primary:hover:not(:disabled) {
+        .btn-primary:hover:not(:disabled) {
             background: #333333;
+            border-color: #333333;
+        }
+
+        .btn-danger {
+            background: var(--accent-error);
+            color: white;
+            border-color: var(--accent-error);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+            border-color: #dc2626;
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            gap: 12px;
         }
 
-        .stat-item {
-            border: 1px solid #000000;
-            padding: 12px;
+        .stat-card {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-medium);
+            padding: 16px;
             text-align: center;
         }
 
         .stat-label {
-            font-size: 9px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary);
             margin-bottom: 4px;
-            color: #666666;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
         }
 
         .stat-value {
-            font-size: 16px;
-            font-weight: 700;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
         }
 
         .main-content {
-            background: #ffffff;
-            border: 2px solid #000000;
-            padding: 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-large);
+            padding: 32px;
+            box-shadow: var(--shadow-light);
         }
 
-        .test-section {
-            margin-bottom: 40px;
+        .section {
+            margin-bottom: 48px;
             padding-bottom: 32px;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid var(--border-light);
         }
 
-        .test-section:last-child {
+        .section:last-child {
             border-bottom: none;
             margin-bottom: 0;
         }
 
-        .test-section h2 {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
         }
 
         .section-number {
-            color: #666666;
-            margin-right: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--text-primary);
+            color: var(--bg-secondary);
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 16px;
         }
 
-        .test-controls {
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: -0.025em;
+        }
+
+        .controls {
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
-            margin-bottom: 16px;
+            margin-bottom: 24px;
             align-items: center;
         }
 
-        .test-controls input,
-        .test-controls select {
-            padding: 6px 10px;
-            border: 1px solid #000000;
-            background: #ffffff;
+        .controls .form-input,
+        .controls .form-select {
+            min-width: 160px;
+            padding: 8px 12px;
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-small);
+            background: var(--bg-secondary);
             font-family: inherit;
-            font-size: 12px;
-            min-width: 120px;
+            font-size: 13px;
+            color: var(--text-primary);
         }
 
-        .log-container {
-            border: 1px solid #000000;
-            background: #f8f8f8;
-            height: 240px;
+        .log-panel {
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-medium);
+            background: var(--bg-tertiary);
+            height: 280px;
             overflow-y: auto;
-            font-size: 11px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 12px;
         }
 
         .log-entry {
-            padding: 4px 8px;
-            border-bottom: 1px solid #e0e0e0;
-            font-family: 'JetBrains Mono', monospace;
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
         }
 
         .log-entry:last-child {
             border-bottom: none;
         }
 
-        .log-timestamp {
-            color: #666666;
-            margin-right: 8px;
+        .log-time {
+            color: var(--text-tertiary);
+            font-weight: 500;
+            min-width: 80px;
+            flex-shrink: 0;
         }
 
-        .log-send {
-            color: #1976d2;
+        .log-content {
+            flex: 1;
+            word-break: break-word;
         }
 
-        .log-receive {
-            color: #388e3c;
-        }
-
-        .log-error {
-            color: #d32f2f;
-            background: #ffebee;
-        }
-
-        .log-info {
-            color: #333333;
-        }
+        .log-send { color: var(--accent-info); }
+        .log-receive { color: var(--accent-success); }
+        .log-error { color: var(--accent-error); }
+        .log-info { color: var(--text-primary); }
 
         .stream-list {
-            border: 1px solid #000000;
-            margin-top: 16px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-medium);
+            margin-top: 20px;
+            overflow: hidden;
         }
 
         .stream-item {
-            padding: 12px;
-            border-bottom: 1px solid #e0e0e0;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-light);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -306,14 +383,16 @@
         }
 
         .stream-id {
-            font-weight: 700;
-            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 13px;
         }
 
-        .stream-type {
-            font-size: 10px;
-            color: #666666;
+        .stream-meta {
+            font-size: 11px;
+            color: var(--text-secondary);
             text-transform: uppercase;
+            letter-spacing: 0.025em;
         }
 
         .stream-actions {
@@ -321,83 +400,152 @@
             gap: 8px;
         }
 
-        .stream-actions button {
-            padding: 4px 8px;
-            font-size: 10px;
-        }
-
-        .performance-metrics {
+        .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px;
-            margin-top: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
         }
 
         .metric-card {
-            border: 1px solid #000000;
-            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-medium);
+            padding: 20px;
+            text-align: center;
         }
 
         .metric-label {
-            font-size: 10px;
-            font-weight: 600;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
             text-transform: uppercase;
-            color: #666666;
-            margin-bottom: 4px;
+            letter-spacing: 0.025em;
         }
 
         .metric-value {
-            font-size: 14px;
-            font-weight: 700;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
         }
 
         .metric-unit {
-            font-size: 10px;
-            color: #666666;
+            font-size: 13px;
+            color: var(--text-secondary);
             margin-left: 2px;
         }
 
-        .advanced-controls {
+        .advanced-panel {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-top: 16px;
+            gap: 24px;
+            margin-top: 24px;
         }
 
         .control-group {
-            border: 1px solid #000000;
-            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-medium);
+            padding: 20px;
         }
 
-        .control-group h4 {
-            font-size: 12px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            text-transform: uppercase;
+        .control-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
         }
 
-        .checkbox-group {
+        .checkbox-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 12px;
         }
 
         .checkbox-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
         }
 
         .checkbox-item input[type="checkbox"] {
             width: 16px;
             height: 16px;
+            accent-color: var(--text-primary);
         }
 
         .checkbox-item label {
-            font-size: 11px;
-            text-transform: none;
-            letter-spacing: 0;
-            color: #333333;
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 32px 20px;
+            color: var(--text-tertiary);
+            font-style: italic;
+            font-size: 13px;
+        }
+
+        /* Scrollbar styling */
+        .log-panel::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .log-panel::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        .log-panel::-webkit-scrollbar-thumb {
+            background: var(--border-medium);
+            border-radius: 2px;
+        }
+
+        .log-panel::-webkit-scrollbar-thumb:hover {
+            background: var(--text-tertiary);
+        }
+
+        /* Responsive design */
+        @media (max-width: 1200px) {
+            .layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .sidebar {
+                position: static;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+            
+            .header {
+                padding: 24px;
+            }
+            
+            .main-content {
+                padding: 24px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .advanced-panel {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -405,54 +553,55 @@
     <div class="container">
         <div class="header">
             <h1>WebTransport Control Panel</h1>
-            <div class="subtitle">Protocol Testing & Validation Suite</div>
+            <div class="subtitle">Modern protocol testing & validation suite</div>
         </div>
 
-        <div class="main-grid">
+        <div class="layout">
             <div class="sidebar">
                 <div class="sidebar-section">
-                    <h3>Connection</h3>
+                    <div class="sidebar-title">Connection</div>
                     <div class="connection-status status-disconnected" id="connectionStatus">
-                        DISCONNECTED
+                        Disconnected
                     </div>
                     <div class="form-group">
-                        <label>Server URL</label>
-                        <input type="text" id="serverUrl" value="https://localhost:4433/">
+                        <label class="form-label">Server URL</label>
+                        <input type="text" class="form-input" id="serverUrl" value="https://localhost:4433/" placeholder="Enter server URL">
                     </div>
                     <div class="form-group">
-                        <label>Certificate Hash (SHA-256)</label>
-                        <input type="text" id="certHash" value="0843f241f0c1890b5eb8b6fd8f8bb23ad48168f839a7ca4ad423ef31c3ec983c">
+                        <label class="form-label">Certificate Hash (SHA-256)</label>
+                        <input type="text" class="form-input" id="certHash" placeholder="Enter certificate hash">
+                        <div class="form-hint">Automatically saved to browser storage</div>
                     </div>
-                    <div class="btn-group">
-                        <button id="connectBtn" class="primary" onclick="connect()">Connect</button>
-                        <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+                    <div class="button-group">
+                        <button id="connectBtn" class="btn btn-primary" onclick="connect()">Connect</button>
+                        <button id="disconnectBtn" class="btn btn-danger" onclick="disconnect()" disabled>Disconnect</button>
                     </div>
                 </div>
 
                 <div class="sidebar-section">
-                    <h3>Statistics</h3>
+                    <div class="sidebar-title">Statistics</div>
                     <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-label">Bidir Streams</div>
+                        <div class="stat-card">
+                            <div class="stat-label">BiDir Streams</div>
                             <div class="stat-value" id="bidirCount">0</div>
                         </div>
-                        <div class="stat-item">
-                            <div class="stat-label">Unidir Streams</div>
+                        <div class="stat-card">
+                            <div class="stat-label">UniDir Streams</div>
                             <div class="stat-value" id="unidirCount">0</div>
                         </div>
-                        <div class="stat-item">
+                        <div class="stat-card">
                             <div class="stat-label">Active Streams</div>
                             <div class="stat-value" id="activeStreams">0</div>
                         </div>
-                        <div class="stat-item">
+                        <div class="stat-card">
                             <div class="stat-label">Datagrams</div>
                             <div class="stat-value" id="datagramCount">0</div>
                         </div>
-                        <div class="stat-item">
+                        <div class="stat-card">
                             <div class="stat-label">Bytes Sent</div>
                             <div class="stat-value" id="bytesSent">0</div>
                         </div>
-                        <div class="stat-item">
+                        <div class="stat-card">
                             <div class="stat-label">Bytes Received</div>
                             <div class="stat-value" id="bytesReceived">0</div>
                         </div>
@@ -460,60 +609,73 @@
                 </div>
 
                 <div class="sidebar-section">
-                    <h3>Session Control</h3>
-                    <div class="btn-group">
-                        <button onclick="clearAllLogs()">Clear Logs</button>
-                        <button onclick="exportLogs()">Export</button>
+                    <div class="sidebar-title">Session</div>
+                    <div class="button-group">
+                        <button class="btn" onclick="clearAllLogs()">Clear Logs</button>
+                        <button class="btn" onclick="exportLogs()">Export Data</button>
                     </div>
                 </div>
             </div>
 
             <div class="main-content">
-                <div class="test-section">
-                    <h2><span class="section-number">01.</span>Bidirectional Streams</h2>
-                    <div class="test-controls">
-                        <button onclick="createBidirStream()">Create Stream</button>
-                        <input type="text" id="bidirMessage" placeholder="Message content" value="Hello BiDir Stream!">
-                        <button onclick="sendBidirMessage()">Send Message</button>
-                        <button onclick="closeBidirStream()">Close Stream</button>
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-number">1</div>
+                        <h2 class="section-title">Bidirectional Streams</h2>
                     </div>
-                    <div class="log-container" id="bidirLog"></div>
-                    <div class="stream-list" id="bidirStreams"></div>
+                    <div class="controls">
+                        <button class="btn" onclick="createBidirStream()">Create Stream</button>
+                        <input type="text" class="form-input" id="bidirMessage" placeholder="Enter message content" value="Hello BiDir Stream!">
+                        <button class="btn" onclick="sendBidirMessage()">Send Message</button>
+                        <button class="btn btn-danger" onclick="closeBidirStream()">Close Stream</button>
+                    </div>
+                    <div class="log-panel" id="bidirLog"></div>
+                    <div class="stream-list" id="bidirStreams">
+                        <div class="empty-state">No active bidirectional streams</div>
+                    </div>
                 </div>
 
-                <div class="test-section">
-                    <h2><span class="section-number">02.</span>Unidirectional Streams</h2>
-                    <div class="test-controls">
-                        <button onclick="createUnidirStream()">Create Stream</button>
-                        <input type="text" id="unidirMessage" placeholder="Message content" value="Hello UniDir Stream!">
-                        <button onclick="sendUnidirMessage()">Send Message</button>
-                        <select id="dataSize">
-                            <option value="100">100 bytes</option>
-                            <option value="1024" selected>1 KB</option>
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-number">2</div>
+                        <h2 class="section-title">Unidirectional Streams</h2>
+                    </div>
+                    <div class="controls">
+                        <button class="btn" onclick="createUnidirStream()">Create Stream</button>
+                        <input type="text" class="form-input" id="unidirMessage" placeholder="Enter message content" value="Hello UniDir Stream!">
+                        <button class="btn" onclick="sendUnidirMessage()">Send Message</button>
+                        <select class="form-select" id="dataSize">
+                            <option value="1024">1 KB</option>
                             <option value="10240">10 KB</option>
                             <option value="102400">100 KB</option>
+                            <option value="1048576">1 MB</option>
                         </select>
-                        <button onclick="sendLargeData()">Send Bulk Data</button>
+                        <button class="btn" onclick="sendLargeData()">Send Bulk Data</button>
                     </div>
-                    <div class="log-container" id="unidirLog"></div>
-                    <div class="stream-list" id="unidirStreams"></div>
+                    <div class="log-panel" id="unidirLog"></div>
+                    <div class="stream-list" id="unidirStreams">
+                        <div class="empty-state">No active unidirectional streams</div>
+                    </div>
                 </div>
 
-                <div class="test-section">
-                    <h2><span class="section-number">03.</span>Datagram Transport</h2>
-                    <div class="test-controls">
-                        <input type="text" id="datagramMessage" placeholder="Datagram content" value="Hello Datagram!">
-                        <button onclick="sendDatagram()">Send Single</button>
-                        <select id="burstCount">
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-number">3</div>
+                        <h2 class="section-title">Datagram Transport</h2>
+                    </div>
+                    <div class="controls">
+                        <input type="text" class="form-input" id="datagramMessage" placeholder="Enter datagram content" value="Hello Datagram!">
+                        <button class="btn" onclick="sendDatagram()">Send Single</button>
+                        <select class="form-select" id="burstCount">
                             <option value="10">10 messages</option>
-                            <option value="50" selected>50 messages</option>
+                            <option value="50">50 messages</option>
                             <option value="100">100 messages</option>
                             <option value="500">500 messages</option>
                         </select>
-                        <button onclick="sendDatagramBurst()">Send Burst</button>
+                        <button class="btn" onclick="sendDatagramBurst()">Send Burst</button>
                     </div>
-                    <div class="log-container" id="datagramLog"></div>
-                    <div class="performance-metrics">
+                    <div class="log-panel" id="datagramLog"></div>
+                    <div class="metrics-grid">
                         <div class="metric-card">
                             <div class="metric-label">Send Rate</div>
                             <div class="metric-value" id="sendRate">0<span class="metric-unit">msg/s</span></div>
@@ -529,25 +691,35 @@
                     </div>
                 </div>
 
-                <div class="test-section">
-                    <h2><span class="section-number">04.</span>Server-Initiated Streams</h2>
-                    <div class="test-controls">
-                        <button onclick="requestServerStream()">Request Server Stream</button>
-                        <select id="serverStreamType">
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-number">4</div>
+                        <h2 class="section-title">Server-Initiated Streams</h2>
+                    </div>
+                    <div class="controls">
+                        <button class="btn" onclick="requestServerStream()">Request Server Stream</button>
+                        <select class="form-select" id="serverStreamType">
                             <option value="bidirectional">Bidirectional</option>
                             <option value="unidirectional">Unidirectional</option>
                         </select>
+                        <input type="text" class="form-input" id="serverStreamMessage" placeholder="Message for server stream" value="Hello from client!">
+                        <button class="btn" onclick="sendServerStreamMessage()">Send to Server Stream</button>
                     </div>
-                    <div class="log-container" id="serverStreamLog"></div>
-                    <div class="stream-list" id="serverStreams"></div>
+                    <div class="log-panel" id="serverStreamLog"></div>
+                    <div class="stream-list" id="serverStreams">
+                        <div class="empty-state">No server-initiated streams</div>
+                    </div>
                 </div>
 
-                <div class="test-section">
-                    <h2><span class="section-number">05.</span>Advanced Testing</h2>
-                    <div class="advanced-controls">
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-number">5</div>
+                        <h2 class="section-title">Advanced Testing</h2>
+                    </div>
+                    <div class="advanced-panel">
                         <div class="control-group">
-                            <h4>Stream Testing</h4>
-                            <div class="checkbox-group">
+                            <div class="control-title">Stream Options</div>
+                            <div class="checkbox-list">
                                 <div class="checkbox-item">
                                     <input type="checkbox" id="autoReconnect">
                                     <label for="autoReconnect">Auto-reconnect streams</label>
@@ -557,14 +729,14 @@
                                     <label for="logBinary">Log binary data</label>
                                 </div>
                                 <div class="checkbox-item">
-                                    <input type="checkbox" id="measureLatency">
+                                    <input type="checkbox" id="measureLatency" checked>
                                     <label for="measureLatency">Measure latency</label>
                                 </div>
                             </div>
                         </div>
                         <div class="control-group">
-                            <h4>Performance</h4>
-                            <div class="checkbox-group">
+                            <div class="control-title">Performance</div>
+                            <div class="checkbox-list">
                                 <div class="checkbox-item">
                                     <input type="checkbox" id="highFrequency">
                                     <label for="highFrequency">High frequency mode</label>
@@ -580,16 +752,19 @@
                             </div>
                         </div>
                     </div>
-                    <div class="btn-group">
-                        <button onclick="runStressTest()">Run Stress Test</button>
-                        <button onclick="runLatencyTest()">Latency Test</button>
-                        <button onclick="runThroughputTest()">Throughput Test</button>
+                    <div class="controls">
+                        <button class="btn" onclick="runStressTest()">Run Stress Test</button>
+                        <button class="btn" onclick="runLatencyTest()">Latency Test</button>
+                        <button class="btn" onclick="runThroughputTest()">Throughput Test</button>
                     </div>
                 </div>
 
-                <div class="test-section">
-                    <h2><span class="section-number">06.</span>System Log</h2>
-                    <div class="log-container" id="systemLog"></div>
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-number">6</div>
+                        <h2 class="section-title">System Log</h2>
+                    </div>
+                    <div class="log-panel" id="systemLog"></div>
                 </div>
             </div>
         </div>
@@ -639,19 +814,48 @@
             lastReceiveTime: 0
         };
 
+        // Initialize localStorage integration
+        function loadStoredSettings() {
+            const storedHash = localStorage.getItem('webtransport-cert-hash');
+            const storedUrl = localStorage.getItem('webtransport-server-url');
+            
+            if (storedHash) {
+                document.getElementById('certHash').value = storedHash;
+            }
+            if (storedUrl) {
+                document.getElementById('serverUrl').value = storedUrl;
+            }
+        }
+
+        function saveSettings() {
+            const certHash = document.getElementById('certHash').value.trim();
+            const serverUrl = document.getElementById('serverUrl').value.trim();
+            
+            if (certHash) {
+                localStorage.setItem('webtransport-cert-hash', certHash);
+            }
+            if (serverUrl) {
+                localStorage.setItem('webtransport-server-url', serverUrl);
+            }
+        }
+
         // Logging functions
         function addLog(logId, message, type = 'info') {
             const timestamp = new Date().toLocaleTimeString();
             const logElement = document.getElementById(logId);
             const entry = document.createElement('div');
-            entry.className = `log-entry log-${type}`;
-            entry.innerHTML = `<span class="log-timestamp">[${timestamp}]</span> ${message}`;
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <div class="log-time">${timestamp}</div>
+                <div class="log-content log-${type}">${message}</div>
+            `;
             logElement.appendChild(entry);
             logElement.scrollTop = logElement.scrollHeight;
             
-            // Also log to system log
+            // Also log to system log if not already system log
             if (logId !== 'systemLog') {
-                addLog('systemLog', `${logId.replace('Log', '').toUpperCase()}: ${message}`, type);
+                const sectionName = logId.replace('Log', '').replace(/([A-Z])/g, ' $1').trim();
+                addLog('systemLog', `${sectionName}: ${message}`, type);
             }
         }
 
@@ -675,7 +879,7 @@
             const k = 1024;
             const sizes = ['B', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + sizes[i];
+            return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
         }
 
         function updateConnectionStatus(status) {
@@ -687,18 +891,18 @@
             
             switch (status) {
                 case 'disconnected':
-                    statusElement.textContent = 'DISCONNECTED';
+                    statusElement.textContent = 'Disconnected';
                     connectBtn.disabled = false;
                     disconnectBtn.disabled = true;
                     isConnected = false;
                     break;
                 case 'connecting':
-                    statusElement.textContent = 'CONNECTING';
+                    statusElement.textContent = 'Connecting...';
                     connectBtn.disabled = true;
                     disconnectBtn.disabled = true;
                     break;
                 case 'connected':
-                    statusElement.textContent = 'CONNECTED';
+                    statusElement.textContent = 'Connected';
                     connectBtn.disabled = true;
                     disconnectBtn.disabled = false;
                     isConnected = true;
@@ -710,10 +914,19 @@
         async function connect() {
             try {
                 updateConnectionStatus('connecting');
-                addLog('systemLog', 'Initiating WebTransport connection', 'info');
+                addLog('systemLog', 'Initiating WebTransport connection...', 'info');
                 
-                const url = document.getElementById('serverUrl').value;
-                const hashHex = document.getElementById('certHash').value;
+                const url = document.getElementById('serverUrl').value.trim();
+                const hashHex = document.getElementById('certHash').value.trim();
+                
+                if (!url) {
+                    throw new Error('Server URL is required');
+                }
+                
+                if (!hashHex) {
+                    throw new Error('Certificate hash is required');
+                }
+                
                 const hashBytes = Uint8Array.fromHex(hashHex);
                 
                 webTransport = new WebTransport(url, {
@@ -728,6 +941,7 @@
                 updateConnectionStatus('connected');
                 addLog('systemLog', 'WebTransport connection established successfully', 'info');
                 
+                saveSettings();
                 setupDatagramReader();
                 setupIncomingStreamReader();
                 
@@ -740,7 +954,6 @@
         async function disconnect() {
             if (webTransport) {
                 try {
-                    // Close all active streams
                     bidirStreams.clear();
                     unidirStreams.clear();
                     serverStreams.clear();
@@ -755,7 +968,6 @@
             updateConnectionStatus('disconnected');
             addLog('systemLog', 'WebTransport disconnected', 'info');
             
-            // Reset stats
             stats.activeStreams = 0;
             updateStats();
         }
@@ -773,8 +985,6 @@
                 
                 bidirStreams.set(streamId, {
                     stream: stream,
-                    reader: null,
-                    writer: null,
                     created: Date.now()
                 });
                 
@@ -797,13 +1007,12 @@
                 return;
             }
 
-            const message = document.getElementById('bidirMessage').value;
+            const message = document.getElementById('bidirMessage').value.trim();
             if (!message) {
                 addLog('bidirLog', 'Message content is empty', 'error');
                 return;
             }
 
-            // Send to the most recent stream
             const streamEntry = Array.from(bidirStreams.values()).pop();
             try {
                 const data = new TextEncoder().encode(message);
@@ -827,7 +1036,6 @@
                 return;
             }
 
-            // Close the most recent stream
             const streamId = Array.from(bidirStreams.keys()).pop();
             const streamEntry = bidirStreams.get(streamId);
             
@@ -857,7 +1065,6 @@
                 
                 unidirStreams.set(streamId, {
                     stream: stream,
-                    writer: null,
                     created: Date.now()
                 });
                 
@@ -879,13 +1086,12 @@
                 return;
             }
 
-            const message = document.getElementById('unidirMessage').value;
+            const message = document.getElementById('unidirMessage').value.trim();
             if (!message) {
                 addLog('unidirLog', 'Message content is empty', 'error');
                 return;
             }
 
-            // Send to the most recent stream
             const streamEntry = Array.from(unidirStreams.values()).pop();
             try {
                 const data = new TextEncoder().encode(message);
@@ -906,13 +1112,18 @@
         async function sendLargeData() {
             if (unidirStreams.size === 0) {
                 await createUnidirStream();
+                await new Promise(resolve => setTimeout(resolve, 100));
             }
 
             const size = parseInt(document.getElementById('dataSize').value);
             const streamEntry = Array.from(unidirStreams.values()).pop();
             
+            if (!streamEntry) {
+                addLog('unidirLog', 'Failed to create stream for bulk data', 'error');
+                return;
+            }
+            
             try {
-                // Generate random data
                 const data = new Uint8Array(size);
                 crypto.getRandomValues(data);
                 
@@ -947,13 +1158,26 @@
                     stats.bytesReceived += value.length;
                     stats.datagramCount++;
                     
-                    // Update performance metrics
                     const now = Date.now();
                     if (performanceMetrics.lastReceiveTime > 0) {
                         const timeDiff = now - performanceMetrics.lastReceiveTime;
-                        performanceMetrics.receiveRate = Math.round(1000 / timeDiff);
+                        if (timeDiff > 0) {
+                            performanceMetrics.receiveRate = Math.round(1000 / timeDiff);
+                        }
                     }
                     performanceMetrics.lastReceiveTime = now;
+                    
+                    // Handle PONG responses for latency measurement
+                    if (message.startsWith('PONG_') && document.getElementById('measureLatency').checked) {
+                        const parts = message.split('_');
+                        if (parts.length >= 2) {
+                            const originalTimestamp = parseInt(parts[1]);
+                            if (!isNaN(originalTimestamp)) {
+                                const latency = now - originalTimestamp;
+                                performanceMetrics.roundTrip = Math.round(latency);
+                            }
+                        }
+                    }
                     
                     updateStats();
                     updatePerformanceMetrics();
@@ -972,31 +1196,37 @@
                 return;
             }
 
-            const message = document.getElementById('datagramMessage').value;
+            const message = document.getElementById('datagramMessage').value.trim();
             if (!message) {
                 addLog('datagramLog', 'Message content is empty', 'error');
                 return;
             }
 
             try {
-                const data = new TextEncoder().encode(message);
+                let finalMessage = message;
+                if (document.getElementById('measureLatency').checked && message.startsWith('PING')) {
+                    finalMessage = `PING_${Date.now()}`;
+                }
+                
+                const data = new TextEncoder().encode(finalMessage);
                 const writer = webTransport.datagrams.writable.getWriter();
                 
                 const sendTime = Date.now();
                 await writer.write(data);
                 writer.releaseLock();
                 
-                // Update performance metrics
                 if (performanceMetrics.lastSendTime > 0) {
                     const timeDiff = sendTime - performanceMetrics.lastSendTime;
-                    performanceMetrics.sendRate = Math.round(1000 / timeDiff);
+                    if (timeDiff > 0) {
+                        performanceMetrics.sendRate = Math.round(1000 / timeDiff);
+                    }
                 }
                 performanceMetrics.lastSendTime = sendTime;
                 
                 stats.bytesSent += data.length;
                 updateStats();
                 updatePerformanceMetrics();
-                addLog('datagramLog', `Sent: ${message}`, 'send');
+                addLog('datagramLog', `Sent: ${finalMessage}`, 'send');
                 
             } catch (error) {
                 addLog('datagramLog', `Send failed: ${error.message}`, 'error');
@@ -1010,7 +1240,12 @@
             }
 
             const count = parseInt(document.getElementById('burstCount').value);
-            const baseMessage = document.getElementById('datagramMessage').value;
+            const baseMessage = document.getElementById('datagramMessage').value.trim();
+            
+            if (!baseMessage) {
+                addLog('datagramLog', 'Message content is empty', 'error');
+                return;
+            }
             
             addLog('datagramLog', `Starting burst test: ${count} messages`, 'info');
             
@@ -1028,7 +1263,6 @@
                     if ((i + 1) % 50 === 0) {
                         updateStats();
                         addLog('datagramLog', `Progress: ${i + 1}/${count} messages sent`, 'info');
-                        // Small delay to prevent overwhelming
                         await new Promise(resolve => setTimeout(resolve, 1));
                     }
                 }
@@ -1049,41 +1283,74 @@
         async function setupIncomingStreamReader() {
             if (!webTransport) return;
             
-            const reader = webTransport.incomingBidirectionalStreams.getReader();
+            // Handle incoming bidirectional streams
+            const bidirReader = webTransport.incomingBidirectionalStreams.getReader();
             
-            try {
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) {
-                        addLog('serverStreamLog', 'Incoming stream reader closed', 'info');
-                        break;
+            (async () => {
+                try {
+                    while (true) {
+                        const { value, done } = await bidirReader.read();
+                        if (done) {
+                            addLog('serverStreamLog', 'Incoming bidirectional stream reader closed', 'info');
+                            break;
+                        }
+                        
+                        const streamId = `server-bidir-${nextStreamId++}`;
+                        serverStreams.set(streamId, {
+                            stream: value,
+                            type: 'bidirectional',
+                            created: Date.now()
+                        });
+                        
+                        stats.activeStreams++;
+                        updateStats();
+                        updateStreamLists();
+                        
+                        addLog('serverStreamLog', `Server opened bidirectional stream: ${streamId}`, 'info');
+                        setupStreamReader(streamId, value, 'serverStreamLog');
                     }
-                    
-                    const streamId = `server-bidir-${nextStreamId++}`;
-                    serverStreams.set(streamId, {
-                        stream: value,
-                        type: 'bidirectional',
-                        created: Date.now()
-                    });
-                    
-                    stats.activeStreams++;
-                    updateStats();
-                    updateStreamLists();
-                    
-                    addLog('serverStreamLog', `Server opened bidirectional stream: ${streamId}`, 'info');
-                    setupStreamReader(streamId, value, 'serverStreamLog');
+                } catch (error) {
+                    addLog('serverStreamLog', `Incoming bidirectional stream error: ${error.message}`, 'error');
+                } finally {
+                    bidirReader.releaseLock();
                 }
-            } catch (error) {
-                addLog('serverStreamLog', `Incoming stream error: ${error.message}`, 'error');
-            } finally {
-                reader.releaseLock();
-            }
+            })();
+
+            // Handle incoming unidirectional streams
+            const unidirReader = webTransport.incomingUnidirectionalStreams.getReader();
+            
+            (async () => {
+                try {
+                    while (true) {
+                        const { value, done } = await unidirReader.read();
+                        if (done) {
+                            addLog('serverStreamLog', 'Incoming unidirectional stream reader closed', 'info');
+                            break;
+                        }
+                        
+                        const streamId = `server-unidir-${nextStreamId++}`;
+                        serverStreams.set(streamId, {
+                            stream: value,
+                            type: 'unidirectional',
+                            created: Date.now()
+                        });
+                        
+                        stats.activeStreams++;
+                        updateStats();
+                        updateStreamLists();
+                        
+                        addLog('serverStreamLog', `Server opened unidirectional stream: ${streamId}`, 'info');
+                        setupStreamReader(streamId, value, 'serverStreamLog');
+                    }
+                } catch (error) {
+                    addLog('serverStreamLog', `Incoming unidirectional stream error: ${error.message}`, 'error');
+                } finally {
+                    unidirReader.releaseLock();
+                }
+            })();
         }
 
         async function requestServerStream() {
-            // This would typically require sending a message to the server
-            // requesting it to open a stream. For now, we'll simulate this
-            // by sending a datagram with a special message
             const streamType = document.getElementById('serverStreamType').value;
             const requestMessage = `REQUEST_STREAM:${streamType}`;
             
@@ -1099,6 +1366,8 @@
                 await writer.write(data);
                 writer.releaseLock();
                 
+                stats.bytesSent += data.length;
+                updateStats();
                 addLog('serverStreamLog', `Requested server stream: ${streamType}`, 'send');
                 
             } catch (error) {
@@ -1106,9 +1375,53 @@
             }
         }
 
+        async function sendServerStreamMessage() {
+            if (serverStreams.size === 0) {
+                addLog('serverStreamLog', 'No active server streams', 'error');
+                return;
+            }
+
+            const message = document.getElementById('serverStreamMessage').value.trim();
+            if (!message) {
+                addLog('serverStreamLog', 'Message content is empty', 'error');
+                return;
+            }
+
+            const serverStreamEntries = Array.from(serverStreams.entries());
+            let targetStream = null;
+
+            for (let i = serverStreamEntries.length - 1; i >= 0; i--) {
+                const [streamId, streamData] = serverStreamEntries[i];
+                if (streamData.type === 'bidirectional' && streamData.stream.writable) {
+                    targetStream = { id: streamId, data: streamData };
+                    break;
+                }
+            }
+
+            if (!targetStream) {
+                addLog('serverStreamLog', 'No writable server streams available (need bidirectional)', 'error');
+                return;
+            }
+
+            try {
+                const data = new TextEncoder().encode(message);
+                const writer = targetStream.data.stream.writable.getWriter();
+                
+                await writer.write(data);
+                writer.releaseLock();
+                
+                stats.bytesSent += data.length;
+                updateStats();
+                addLog('serverStreamLog', `Sent to ${targetStream.id}: ${message} (${data.length} bytes)`, 'send');
+                
+            } catch (error) {
+                addLog('serverStreamLog', `Send to server stream failed: ${error.message}`, 'error');
+            }
+        }
+
         // Stream reader setup
         async function setupStreamReader(streamId, stream, logId) {
-            if (!stream.readable) return; // Unidirectional outbound stream
+            if (!stream.readable) return;
             
             const reader = stream.readable.getReader();
             
@@ -1144,7 +1457,10 @@
             container.innerHTML = '';
             
             if (streams.size === 0) {
-                container.innerHTML = '<div class="stream-item">No active streams</div>';
+                const emptyText = type === 'server' ? 'No server-initiated streams' : 
+                                 type === 'bidirectional' ? 'No active bidirectional streams' :
+                                 'No active unidirectional streams';
+                container.innerHTML = `<div class="empty-state">${emptyText}</div>`;
                 return;
             }
             
@@ -1153,14 +1469,19 @@
                 streamItem.className = 'stream-item';
                 
                 const age = Math.round((Date.now() - streamData.created) / 1000);
+                let streamTypeLabel = type;
+                
+                if (type === 'server') {
+                    streamTypeLabel = `server-${streamData.type}`;
+                }
                 
                 streamItem.innerHTML = `
                     <div class="stream-info">
                         <div class="stream-id">${streamId}</div>
-                        <div class="stream-type">${type} • ${age}s old</div>
+                        <div class="stream-meta">${streamTypeLabel} • ${age}s old</div>
                     </div>
                     <div class="stream-actions">
-                        <button onclick="closeStream('${streamId}', '${containerId}')">Close</button>
+                        <button class="btn btn-danger" onclick="closeStream('${streamId}', '${containerId}')">Close</button>
                     </div>
                 `;
                 
@@ -1209,20 +1530,18 @@
 
         // Advanced testing functions
         async function runStressTest() {
-            addLog('systemLog', 'Starting stress test', 'info');
+            addLog('systemLog', 'Starting stress test...', 'info');
             
-            // Create multiple streams and send data rapidly
             const promises = [];
             
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 3; i++) {
                 promises.push(createBidirStream());
                 promises.push(createUnidirStream());
             }
             
             await Promise.all(promises);
-            
-            // Send burst of datagrams
             await sendDatagramBurst();
+            await requestServerStream();
             
             addLog('systemLog', 'Stress test completed', 'info');
         }
@@ -1233,7 +1552,7 @@
                 return;
             }
             
-            addLog('systemLog', 'Starting latency test', 'info');
+            addLog('systemLog', 'Starting latency test...', 'info');
             
             const iterations = 10;
             const latencies = [];
@@ -1248,7 +1567,6 @@
                     await writer.write(data);
                     writer.releaseLock();
                     
-                    // Wait for response (this is simplified - in practice you'd correlate responses)
                     await new Promise(resolve => setTimeout(resolve, 50));
                     
                     const latency = performance.now() - startTime;
@@ -1259,11 +1577,12 @@
                 }
             }
             
-            const avgLatency = latencies.reduce((a, b) => a + b, 0) / latencies.length;
-            performanceMetrics.roundTrip = Math.round(avgLatency);
-            updatePerformanceMetrics();
-            
-            addLog('systemLog', `Latency test completed: ${Math.round(avgLatency)}ms average`, 'info');
+            if (latencies.length > 0) {
+                const avgLatency = latencies.reduce((a, b) => a + b, 0) / latencies.length;
+                performanceMetrics.roundTrip = Math.round(avgLatency);
+                updatePerformanceMetrics();
+                addLog('systemLog', `Latency test completed: ${Math.round(avgLatency)}ms average`, 'info');
+            }
         }
 
         async function runThroughputTest() {
@@ -1272,21 +1591,25 @@
                 return;
             }
             
-            addLog('systemLog', 'Starting throughput test', 'info');
+            addLog('systemLog', 'Starting throughput test...', 'info');
             
-            const testData = new Uint8Array(1024 * 1024); // 1MB
+            const testData = new Uint8Array(512 * 1024); // 512KB
             crypto.getRandomValues(testData);
             
             await createUnidirStream();
             const streamEntry = Array.from(unidirStreams.values()).pop();
+            
+            if (!streamEntry) {
+                addLog('systemLog', 'Failed to create stream for throughput test', 'error');
+                return;
+            }
             
             const startTime = performance.now();
             
             try {
                 const writer = streamEntry.stream.getWriter();
                 
-                // Send data in chunks
-                const chunkSize = 64 * 1024; // 64KB chunks
+                const chunkSize = 32 * 1024; // 32KB chunks
                 for (let offset = 0; offset < testData.length; offset += chunkSize) {
                     const end = Math.min(offset + chunkSize, testData.length);
                     const chunk = testData.slice(offset, end);
@@ -1296,7 +1619,7 @@
                 writer.releaseLock();
                 
                 const duration = performance.now() - startTime;
-                const throughput = (testData.length * 8) / (duration / 1000); // bits per second
+                const throughput = (testData.length * 8) / (duration / 1000);
                 const mbps = (throughput / (1024 * 1024)).toFixed(2);
                 
                 stats.bytesSent += testData.length;
@@ -1323,17 +1646,11 @@
                 timestamp: new Date().toISOString(),
                 connection: {
                     url: document.getElementById('serverUrl').value,
-                    status: isConnected ? 'connected' : 'disconnected'
+                    status: isConnected ? 'connected' : 'disconnected',
+                    certHash: document.getElementById('certHash').value
                 },
                 statistics: stats,
                 performance: performanceMetrics,
-                logs: {
-                    bidirectional: document.getElementById('bidirLog').textContent,
-                    unidirectional: document.getElementById('unidirLog').textContent,
-                    datagrams: document.getElementById('datagramLog').textContent,
-                    serverStreams: document.getElementById('serverStreamLog').textContent,
-                    system: document.getElementById('systemLog').textContent
-                },
                 streams: {
                     bidirectional: Array.from(bidirStreams.keys()),
                     unidirectional: Array.from(unidirStreams.keys()),
@@ -1352,23 +1669,29 @@
             addLog('systemLog', 'Session data exported', 'info');
         }
 
-        // Initialize
-        updateConnectionStatus('disconnected');
-        updateStats();
-        updatePerformanceMetrics();
-        updateStreamLists();
-        addLog('systemLog', 'WebTransport Control Panel initialized', 'info');
-        
-        // Performance monitoring
-        setInterval(() => {
-            if (performanceMetrics.sendRate > 0) {
-                performanceMetrics.sendRate = Math.max(0, performanceMetrics.sendRate - 1);
-            }
-            if (performanceMetrics.receiveRate > 0) {
-                performanceMetrics.receiveRate = Math.max(0, performanceMetrics.receiveRate - 1);
-            }
+        // Initialize application
+        function init() {
+            loadStoredSettings();
+            updateConnectionStatus('disconnected');
+            updateStats();
             updatePerformanceMetrics();
-        }, 1000);
+            updateStreamLists();
+            addLog('systemLog', 'WebTransport Control Panel initialized', 'info');
+            
+            // Performance monitoring
+            setInterval(() => {
+                if (performanceMetrics.sendRate > 0) {
+                    performanceMetrics.sendRate = Math.max(0, performanceMetrics.sendRate - 1);
+                }
+                if (performanceMetrics.receiveRate > 0) {
+                    performanceMetrics.receiveRate = Math.max(0, performanceMetrics.receiveRate - 1);
+                }
+                updatePerformanceMetrics();
+            }, 1000);
+        }
+
+        // Start the application
+        init();
     </script>
 </body>
 </html>

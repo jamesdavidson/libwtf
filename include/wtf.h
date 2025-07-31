@@ -541,6 +541,11 @@ WTF_API wtf_result_t wtf_session_get_peer_address(wtf_session_t* session, void* 
 //! @param user_context user-provided context data
 WTF_API void wtf_session_set_context(wtf_session_t* session, void* user_context);
 
+//! Get session user context
+//! @param session target session
+//! @return user-provided context data  
+WTF_API void* wtf_session_get_context(wtf_session_t* session);
+
 // #endregion
 
 // #region Stream Management API
@@ -597,6 +602,11 @@ WTF_API void wtf_stream_set_callback(wtf_stream_t* stream, wtf_stream_callback_t
 //! @param stream target stream
 //! @param user_context user-provided context data
 WTF_API void wtf_stream_set_context(wtf_stream_t* stream, void* user_context);
+
+//! Get stream user context
+//! @param stream target stream
+//! @return user-provided context data
+WTF_API void* wtf_stream_get_context(wtf_stream_t* stream); 
 
 //! Get stream type
 //! @param stream target stream

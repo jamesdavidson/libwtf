@@ -407,9 +407,11 @@ QUIC_STATUS QUIC_API wtf_connection_callback(HQUIC Connection, void* Context,
                                              Event->DATAGRAM_SEND_STATE_CHANGED.State}};
                         session->callback(&event);
                     } else {
-                        for (uint32_t i = 1; i < send_ctx->count; i++) {
-                            if (send_ctx->buffers[i].data) {
-                                free(send_ctx->buffers[i].data);
+                        if (QUIC_DATAGRAM_SEND_STATE_IS_FINAL(Event->DATAGRAM_SEND_STATE_CHANGED.State)) {
+                            for (uint32_t i = 1; i < send_ctx->count; i++) {
+                                if (send_ctx->buffers[i].data) {
+                                    free(send_ctx->buffers[i].data);
+                                }
                             }
                         }
                     }

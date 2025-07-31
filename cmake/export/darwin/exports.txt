@@ -16,12 +16,14 @@ _wtf_session_create_stream
 _wtf_session_get_state
 _wtf_session_get_peer_address
 _wtf_session_set_context
+_wtf_session_get_context
 _wtf_stream_send
 _wtf_stream_close
 _wtf_stream_abort
 _wtf_stream_get_id
 _wtf_stream_set_callback
 _wtf_stream_set_context
+_wtf_stream_get_context
 _wtf_stream_get_type
 _wtf_stream_get_state
 _wtf_stream_set_priority

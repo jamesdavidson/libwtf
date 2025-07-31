@@ -158,6 +158,14 @@ void wtf_session_set_context(wtf_session_t* session, void* user_context)
     ((wtf_session*)session)->user_context = user_context;
 }
 
+void* wtf_session_get_context(wtf_session_t* session)
+{
+    if (!session) {
+        return NULL;
+    }
+    return ((wtf_session*)session)->user_context;
+}
+
 bool wtf_settings_encode_frame(wtf_connection* conn, uint8_t* buffer, size_t buffer_size,
                                size_t* frame_length)
 {
