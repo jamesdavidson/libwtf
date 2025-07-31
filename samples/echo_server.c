@@ -603,22 +603,22 @@ void log_callback(wtf_log_level_t level, const char* component, const char* file
     const char* level_str = "";
 
     switch (level) {
-        case WTF_LOG_TRACE:
+        case WTF_LOG_LEVEL_TRACE:
             level_str = "TRACE";
             break;
-        case WTF_LOG_DEBUG:
+        case WTF_LOG_LEVEL_DEBUG:
             level_str = "DEBUG";
             break;
-        case WTF_LOG_INFO:
+        case WTF_LOG_LEVEL_INFO:
             level_str = "INFO";
             break;
-        case WTF_LOG_WARN:
+        case WTF_LOG_LEVEL_WARN:
             level_str = "WARN";
             break;
-        case WTF_LOG_ERROR:
+        case WTF_LOG_LEVEL_ERROR:
             level_str = "ERROR";
             break;
-        case WTF_LOG_CRITICAL:
+        case WTF_LOG_LEVEL_CRITICAL:
             level_str = "CRITICAL";
             break;
         default:
@@ -700,7 +700,7 @@ int main(int argc, char* argv[])
     printf("\n");
 
     wtf_context_config_t context_config = {0};
-    context_config.log_level = verbose ? WTF_LOG_DEBUG : WTF_LOG_INFO;
+    context_config.log_level = verbose ? WTF_LOG_LEVEL_TRACE : WTF_LOG_LEVEL_INFO;
     context_config.log_callback = log_callback;
     context_config.worker_thread_count = 4;
     context_config.enable_load_balancing = true;
