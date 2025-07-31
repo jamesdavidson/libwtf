@@ -150,33 +150,50 @@ static wtf_result_t wtf_stream_send_header(wtf_stream* stream, HQUIC Stream)
         return WTF_SUCCESS;
     }
 
-    void* send_buffer_raw = malloc(sizeof(QUIC_BUFFER) + header_length);
-    if (!send_buffer_raw) {
+    wtf_buffer_t* header_buffer = malloc(sizeof(wtf_buffer_t));
+    if (!header_buffer) {
         return WTF_ERROR_OUT_OF_MEMORY;
     }
 
-    QUIC_BUFFER* send_buffer = (QUIC_BUFFER*)send_buffer_raw;
-    uint8_t* data = (uint8_t*)send_buffer_raw + sizeof(QUIC_BUFFER);
+    uint8_t* header_data = malloc(header_length);
+    if (!header_data) {
+        free(header_buffer);
+        return WTF_ERROR_OUT_OF_MEMORY;
+    }
 
-    memcpy(data, header, header_length);
-    send_buffer->Buffer = data;
-    send_buffer->Length = (uint32_t)header_length;
+    memcpy(header_data, header, header_length);
+
+    header_buffer->data = header_data;
+    header_buffer->length = (uint32_t)header_length;
+
+    wtf_internal_send_context* send_ctx = malloc(sizeof(wtf_internal_send_context));
+    if (!send_ctx) {
+        free(header_data);
+        free(header_buffer);
+        return WTF_ERROR_OUT_OF_MEMORY;
+    }
+
+    send_ctx->buffers = header_buffer;
+    send_ctx->count = 1;
+    send_ctx->internal_send = true;
 
     wtf_connection* conn = stream->session->connection;
     QUIC_STATUS status = conn->server->context->quic_api->StreamSend(
-        Stream, send_buffer, 1, QUIC_SEND_FLAG_NONE, send_buffer_raw);
+        Stream, (QUIC_BUFFER*)header_buffer, 1, QUIC_SEND_FLAG_NONE, send_ctx);
 
-    if (QUIC_FAILED(status)) {
-        WTF_LOG_ERROR(conn->server->context, "webtransport",
-                      "Failed to send WebTransport stream header: 0x%x", status);
-        free(send_buffer_raw);
-        return wtf_quic_status_to_result(status);
+    if (QUIC_SUCCEEDED(status)) {
+        WTF_LOG_INFO(conn->server->context, "webtransport", "WebTransport stream %llu header sent",
+                     (unsigned long long)stream->stream_id);
+        return WTF_SUCCESS;
     }
 
-    WTF_LOG_INFO(conn->server->context, "webtransport", "WebTransport stream %llu header sent",
-                 (unsigned long long)stream->stream_id);
-
-    return WTF_SUCCESS;
+    WTF_LOG_ERROR(conn->server->context, "webtransport",
+                  "Failed to send WebTransport stream header: 0x%x", status);
+    
+    free(header_data);
+    free(header_buffer);
+    free(send_ctx);
+    return wtf_quic_status_to_result(status);
 }
 
 static bool wtf_stream_update_session_map(wtf_stream* stream, uint64_t stream_id)
@@ -257,7 +274,7 @@ static void wtf_stream_cleanup_send_context(wtf_stream* stream, wtf_internal_sen
         return;
     }
 
-    if (stream->callback) {
+    if (!send_ctx->internal_send && stream->callback) {
         wtf_stream_event_t event = {
             .type = WTF_STREAM_EVENT_SEND_COMPLETE,
             .stream = (wtf_stream_t*)stream,
@@ -550,6 +567,7 @@ wtf_result_t wtf_stream_send(wtf_stream* stream, const wtf_buffer_t* buffers, ui
 
     send_ctx->buffers = (wtf_buffer_t*)buffers;
     send_ctx->count = buffer_count;
+    send_ctx->internal_send = false; 
 
     QUIC_SEND_FLAGS flags = QUIC_SEND_FLAG_NONE;
     if (fin) {

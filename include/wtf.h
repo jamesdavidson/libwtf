@@ -67,13 +67,13 @@ typedef enum {
 
 //! Logging levels for debugging and monitoring
 typedef enum {
-    WTF_LOG_TRACE = 0,     //! Most detailed messages, may contain sensitive data
-    WTF_LOG_DEBUG = 1,     //! Interactive investigation during development
-    WTF_LOG_INFO = 2,      //! General application flow information
-    WTF_LOG_WARN = 3,      //! Abnormal or unexpected events
-    WTF_LOG_ERROR = 4,     //! Current flow stopped due to failure
-    WTF_LOG_CRITICAL = 5,  //! Unrecoverable application or system crash
-    WTF_LOG_NONE = 6       //! Disable all logging
+    WTF_LOG_LEVEL_TRACE = 0,     //! Most detailed messages, may contain sensitive data
+    WTF_LOG_LEVEL_DEBUG = 1,     //! Interactive investigation during development
+    WTF_LOG_LEVEL_INFO = 2,      //! General application flow information
+    WTF_LOG_LEVEL_WARN = 3,      //! Abnormal or unexpected events
+    WTF_LOG_LEVEL_ERROR = 4,     //! Current flow stopped due to failure
+    WTF_LOG_LEVEL_CRITICAL = 5,  //! Unrecoverable application or system crash
+    WTF_LOG_LEVEL_NONE = 6       //! Disable all logging
 } wtf_log_level_t;
 
 //! Server operational states

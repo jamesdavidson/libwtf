@@ -22,13 +22,13 @@ void wtf_log_internal(wtf_context* ctx, wtf_log_level_t level, const char* compo
             }                                                                                      \
         } while (0)
 
-    #define WTF_LOG_TRACE(ctx, component, ...) WTF_LOG(ctx, WTF_LOG_TRACE, component, __VA_ARGS__)
-    #define WTF_LOG_DEBUG(ctx, component, ...) WTF_LOG(ctx, WTF_LOG_DEBUG, component, __VA_ARGS__)
-    #define WTF_LOG_INFO(ctx, component, ...) WTF_LOG(ctx, WTF_LOG_INFO, component, __VA_ARGS__)
-    #define WTF_LOG_WARN(ctx, component, ...) WTF_LOG(ctx, WTF_LOG_WARN, component, __VA_ARGS__)
-    #define WTF_LOG_ERROR(ctx, component, ...) WTF_LOG(ctx, WTF_LOG_ERROR, component, __VA_ARGS__)
+    #define WTF_LOG_TRACE(ctx, component, ...) WTF_LOG(ctx, WTF_LOG_LEVEL_TRACE, component, __VA_ARGS__)
+    #define WTF_LOG_DEBUG(ctx, component, ...) WTF_LOG(ctx, WTF_LOG_LEVEL_DEBUG, component, __VA_ARGS__)
+    #define WTF_LOG_INFO(ctx, component, ...) WTF_LOG(ctx, WTF_LOG_LEVEL_INFO, component, __VA_ARGS__)
+    #define WTF_LOG_WARN(ctx, component, ...) WTF_LOG(ctx, WTF_LOG_LEVEL_WARN, component, __VA_ARGS__)
+    #define WTF_LOG_ERROR(ctx, component, ...) WTF_LOG(ctx, WTF_LOG_LEVEL_ERROR, component, __VA_ARGS__)
     #define WTF_LOG_CRITICAL(ctx, component, ...)                                                  \
-        WTF_LOG(ctx, WTF_LOG_CRITICAL, component, __VA_ARGS__)
+        WTF_LOG(ctx, WTF_LOG_LEVEL_CRITICAL, component, __VA_ARGS__)
 
 #else
 
