@@ -160,6 +160,7 @@ bool wtf_qpack_preinit(wtf_qpack_context* qpack, uint32_t max_table_capacity,
     if (!qpack)
         return false;
     memset(qpack, 0, sizeof(*qpack));
+    mtx_init(&qpack->mutex, mtx_plain);
     qpack->max_table_capacity = max_table_capacity;
     qpack->max_blocked_streams = max_blocked_streams;
     qpack->peer_max_table_capacity = 0;
@@ -185,6 +186,7 @@ void wtf_qpack_cleanup(wtf_qpack_context* qpack)
     }
 
     mtx_unlock(&qpack->mutex);
+    mtx_destroy(&qpack->mutex);
 }
 
 bool wtf_qpack_init_encoder(wtf_context* ctx, wtf_qpack_context* qpack)
