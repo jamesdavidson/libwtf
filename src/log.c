@@ -17,7 +17,7 @@ void wtf_log_internal(wtf_context* ctx, wtf_log_level_t level, const char* compo
     char message[1024];
     vsnprintf(message, sizeof(message), format, args);
 
-    ctx->log_callback(level, component, file, line, message);
+    ctx->log_callback(level, component, file, line, message, ctx->log_user_context);
 
     va_end(args);
 }
