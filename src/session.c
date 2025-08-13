@@ -380,7 +380,7 @@ wtf_result_t wtf_session_send_datagram(wtf_session* session, const wtf_buffer_t*
 
     // Encode quarter stream ID into header buffer
     uint8_t* end_pos = wtf_varint_encode(quarter_stream_id, header_buffer);
-    if (end_pos - header_buffer != header_size) {
+    if ((size_t) (end_pos - header_buffer) != header_size) {
         result = WTF_ERROR_INTERNAL;
         goto cleanup;
     }
