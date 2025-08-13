@@ -315,8 +315,9 @@ typedef void (*wtf_stream_callback_t)(const wtf_stream_event_t* event);
 //! @param file source file name
 //! @param line source file line number
 //! @param message formatted log message
+//! @param user_context user provided context (see wtf_context_config_t::log_user_context)
 typedef void (*wtf_log_callback_t)(wtf_log_level_t level, const char* component, const char* file,
-                                   int line, const char* message);
+                                   int line, const char* message, void* user_context);
 
 // #endregion
 
