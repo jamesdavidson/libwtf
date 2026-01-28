@@ -1,50 +1,44 @@
-using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace PInvokeSamples
+namespace WebTransportFast;
+
+public static partial class Program
 {
-    public static partial class Program
+    [LibraryImport("wtf")]
+    [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static partial IntPtr wtf_result_to_string(wtf_result_t result);
+
+    private static string ResultToString(wtf_result_t result)
     {
-        // Define a delegate that has the same signature as the native function.
-        private delegate int DirClbk(string fName, ref Stat stat, int typeFlag);
+        IntPtr p = wtf_result_to_string(result);
+        return p == IntPtr.Zero ? string.Empty : Marshal.PtrToStringUTF8(p) ?? string.Empty;
+    }
 
-        // Import the libc and define the method to represent the native function.
-        [LibraryImport("libSystem.dylib", StringMarshalling = StringMarshalling.Utf16)]
-        private static partial int ftw(string dirpath, DirClbk cl, int descriptors);
-
-        // Implement the above DirClbk delegate;
-        // this one just prints out the filename that is passed to it.
-        private static int DisplayEntry(string fName, ref Stat stat, int typeFlag)
+    public static void Main(string[] args)
+    {
+        for (int i = 0; i < 15; i++)
         {
-            Console.WriteLine(fName);
-            return 0;
-        }
-
-        public static void Main(string[] args)
-        {
-            // Call the native function.
-            // Note the second parameter which represents the delegate (callback).
-            ftw(".", DisplayEntry, 10);
+            Console.Out.WriteLine(ResultToString((wtf_result_t)i));
         }
     }
 
-    // The native callback takes a pointer to a struct. This type
-    // represents that struct in managed code.
-    [StructLayout(LayoutKind.Sequential)]
-    public struct Stat
+    // Mirror the native enum layout (defaults to int).
+    private enum wtf_result_t : int
     {
-        public uint DeviceID;
-        public uint InodeNumber;
-        public uint Mode;
-        public uint HardLinks;
-        public uint UserID;
-        public uint GroupID;
-        public uint SpecialDeviceID;
-        public ulong Size;
-        public ulong BlockSize;
-        public uint Blocks;
-        public long TimeLastAccess;
-        public long TimeLastModification;
-        public long TimeLastStatusChange;
+        WTF_SUCCESS = 0,
+        WTF_ERROR_INVALID_PARAMETER,
+        WTF_ERROR_OUT_OF_MEMORY,
+        WTF_ERROR_INTERNAL,
+        WTF_ERROR_CONNECTION_ABORTED,
+        WTF_ERROR_STREAM_ABORTED,
+        WTF_ERROR_INVALID_STATE,
+        WTF_ERROR_BUFFER_TOO_SMALL,
+        WTF_ERROR_NOT_FOUND,
+        WTF_ERROR_REJECTED,
+        WTF_ERROR_TIMEOUT,
+        WTF_ERROR_TLS_HANDSHAKE_FAILED,
+        WTF_ERROR_PROTOCOL_VIOLATION,
+        WTF_ERROR_FLOW_CONTROL
     }
 }

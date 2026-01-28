@@ -6,3 +6,7 @@ cc -I/Users/jamesdavidson/.homebrew/Cellar/libmsquic/2.5.6/include -L/Users/jame
 rm -rfv build ; cmake -DMSQUIC_INCLUDE_DIRS=/Users/jamesdavidson/.homebrew/Cellar/libmsquic/2.5.6/include -DWTF_USE_EXTERNAL_MSQUIC=on -B build
 export LIBRARY_PATH=$LIBRARY_PATH:/Users/jamesdavidson/.homebrew/Cellar/libmsquic/2.5.6/lib
 cmake --build build
+
+
+export DYLD_LIBRARY_PATH=build/output:/Users/jamesdavidson/.homebrew/Cellar/libmsquic/2.5.6/lib:/Users/jamesdavidson/.homebrew/Cellar/openssl@3/3.6.0/lib
+dotnet run --project csharp
