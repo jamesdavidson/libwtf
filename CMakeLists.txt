@@ -144,7 +144,6 @@ endif()
 
 
 if(WTF_USE_EXTERNAL_MSQUIC)
-    find_package(msquic CONFIG REQUIRED)
     set(MSQUIC_LIBRARIES msquic)
 else()
     set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
