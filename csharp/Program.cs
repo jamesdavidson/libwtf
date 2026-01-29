@@ -41,4 +41,34 @@ public static partial class Program
         WTF_ERROR_PROTOCOL_VIOLATION,
         WTF_ERROR_FLOW_CONTROL
     }
+
+    private enum wtf_log_level_t
+    {
+        WTF_LOG_LEVEL_TRACE = 0,
+        WTF_LOG_LEVEL_DEBUG,
+        WTF_LOG_LEVEL_INFO,
+        WTF_LOG_LEVEL_WARN,
+        WTF_LOG_LEVEL_ERROR,
+        WTF_LOG_LEVEL_FATAL
+    }
+
+    private enum wtf_execution_profile_t
+    {
+        WTF_EXECUTION_PROFILE_LOW_LATENCY = 0,
+        WTF_EXECUTION_PROFILE_DEFAULT,
+        WTF_EXECUTION_PROFILE_THROUGHPUT,
+        WTF_EXECUTION_PROFILE_SCAVENGER
+    }
+
+// //! Library context configuration
+//     typedef struct {
+//         wtf_log_level_t log_level;                  //! Global logging level
+//         wtf_log_callback_t log_callback;            //! Custom logging callback
+//         void* log_user_context;                     //! Context for log callback
+//         uint32_t worker_thread_count;               //! Number of worker threads
+//         bool enable_load_balancing;                 //! Enable load balancing
+//         bool disable_encryption;                    //! Disable encryption for testing
+//         wtf_execution_profile_t execution_profile;  //! Performance profile
+//     } wtf_context_config_t;
+
 }
