@@ -1,5 +1,8 @@
 using WebTransportFast;
 
-var server = new EchoServer(8443, "keystore.p12");
+var server = new EchoServer(8443, "cert.pem", "key.pem");
 server.Start();
-Console.Out.WriteLine("ok");
+CancellationTokenSource cts = new();
+Console.CancelKeyPress += (_, _) => cts.Cancel();
+await Task.Delay(Timeout.Infinite, cts.Token);
+server.Stop();

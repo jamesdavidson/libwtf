@@ -19,3 +19,6 @@ ClangSharpPInvokeGenerator --language c --file include/wtf.h --output csharp/Int
 
 export DYLD_LIBRARY_PATH=$(realpath build/output)
 dotnet run --project csharp
+
+
+rm -rfv build ; cmake -DMSQUIC_INCLUDE_DIRS=/Users/jamesdavidson/.homebrew/Cellar/libmsquic/2.5.6/include -DWTF_USE_EXTERNAL_MSQUIC=on -DWTF_BUILD_SAMPLES=on -B build

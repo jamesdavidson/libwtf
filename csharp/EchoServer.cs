@@ -10,7 +10,8 @@ public unsafe class EchoServer
     const byte TRUE = 1;
 
     public int port;
-    public string keystore;
+    public string cert;
+    public string key;
 
     public wtf_context* g_context;
     public bool g_running = true;
@@ -18,16 +19,20 @@ public unsafe class EchoServer
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void session_callback_delegate(wtf_session_event_t* evt);
+
     private static session_callback_delegate _session_callback = session_callback;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate wtf_connection_decision_t connection_validator_delegate(wtf_connection_request_t* request, void* user_data);
+    public delegate wtf_connection_decision_t connection_validator_delegate(wtf_connection_request_t* request,
+        void* user_data);
+
     private static connection_validator_delegate _connection_validator = connection_validator;
 
-    public EchoServer(int port, string keystore)
+    public EchoServer(int port, string cert, string key)
     {
         this.port = port;
-        this.keystore = keystore;
+        this.cert = cert;
+        this.key = key;
     }
 
     static wtf_connection_decision_t connection_validator(wtf_connection_request_t* request, void* user_data)
@@ -39,8 +44,10 @@ public unsafe class EchoServer
     {
         var session_ctx = evt->user_context;
 
-        switch (evt->type) {
-            case wtf_session_event_type_t.WTF_SESSION_EVENT_CONNECTED: {
+        switch (evt->type)
+        {
+            case wtf_session_event_type_t.WTF_SESSION_EVENT_CONNECTED:
+            {
                 Console.Out.WriteLine("[SESSION] New session connected");
                 break;
             }
@@ -52,10 +59,6 @@ public unsafe class EchoServer
 
     public bool Start()
     {
-        // var fi = new FileInfo(this.keystore);
-        // int keystoreLength = (int)fi.Length;
-        byte[] keystoreBytes = File.ReadAllBytes(this.keystore);
-
         // stack allocated (no pinning required)
         wtf_context_config_t context_config = new()
         {
@@ -65,30 +68,36 @@ public unsafe class EchoServer
             enable_load_balancing = TRUE,
         };
 
-        byte* keystore = stackalloc byte[keystoreBytes.Length];
-        keystoreBytes.CopyTo(new Span<byte>(keystore, keystoreBytes.Length));
+        byte[] certPathBytes = Encoding.UTF8.GetBytes(cert + '\0');
+        sbyte* certPath = stackalloc sbyte[certPathBytes.Length];
+        for (int i = 0; i < certPathBytes.Length; i++)
+        {
+            certPath[i] = (sbyte)certPathBytes[i];
+        }
 
-        var passwordBytes = new sbyte[] { 112, 97, 115, 115, 119, 111, 114, 100};
-        sbyte* password = stackalloc sbyte[passwordBytes.Length];
-        passwordBytes.CopyTo(new Span<sbyte>(password, passwordBytes.Length));
+        byte[] keyPathBytes = Encoding.UTF8.GetBytes(key + '\0');
+        sbyte* keyPath = stackalloc sbyte[keyPathBytes.Length];
+        for (int i = 0; i < keyPathBytes.Length; i++)
+        {
+            keyPath[i] = (sbyte)keyPathBytes[i];
+        }
 
         var cert_config = new wtf_certificate_config_t()
         {
-            cert_type = wtf_certificate_type_t.WTF_CERT_TYPE_PKCS12,
+            cert_type = wtf_certificate_type_t.WTF_CERT_TYPE_FILE,
             cert_data = new wtf_certificate_config_t._cert_data_e__Union()
             {
-                pkcs12 = new wtf_certificate_config_t._cert_data_e__Union._pkcs12_e__Struct()
+                file = new wtf_certificate_config_t._cert_data_e__Union._file_e__Struct()
                 {
-                    data = keystore,
-                    data_size = (nuint)keystoreBytes.Length,
-                    password = password,
+                    cert_path = certPath,
+                    key_path = keyPath,
                 }
             }
         };
 
         wtf_server_config_t server_config = new()
         {
-            port = 8443,
+            port = (ushort)port,
             cert_config = &cert_config,
             session_callback =
                 (delegate* unmanaged[Cdecl]<wtf_session_event_t*, void>)Marshal.GetFunctionPointerForDelegate(
@@ -125,7 +134,8 @@ public unsafe class EchoServer
             }
 
             status = Methods.wtf_server_start(g_server);
-            if (status != wtf_result_t.WTF_SUCCESS) {
+            if (status != wtf_result_t.WTF_SUCCESS)
+            {
                 var msg = Marshal.PtrToStringAnsi((IntPtr)Methods.wtf_result_to_string(status));
                 Console.Out.WriteLine($"[ERROR] Failed to start server: {msg}");
                 Methods.wtf_server_destroy(g_server);
@@ -134,6 +144,18 @@ public unsafe class EchoServer
             }
         }
 
+        return true;
+    }
+
+    public bool Stop()
+    {
+        var status = Methods.wtf_server_stop(g_server);
+        if (status != wtf_result_t.WTF_SUCCESS)
+        {
+            return false;
+        }
+        Methods.wtf_server_destroy(g_server);
+        Methods.wtf_context_destroy(g_context);
         return true;
     }
 }
