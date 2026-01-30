@@ -93,6 +93,44 @@ void signal_handler(int sig)
     printf("\n[SIGNAL] Shutting down server...\n");
 }
 
+uint8_t* load_file_bytes(const char* filename, size_t* out_size)
+{
+    FILE* file = fopen(filename, "rb");
+    if (!file) {
+        printf("[ERROR] Failed to open file: %s\n", filename);
+        return NULL;
+    }
+
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    if (file_size <= 0) {
+        printf("[ERROR] Invalid file size: %s\n", filename);
+        fclose(file);
+        return NULL;
+    }
+
+    uint8_t* buffer = malloc((size_t)file_size);
+    if (!buffer) {
+        printf("[ERROR] Failed to allocate memory for file: %s\n", filename);
+        fclose(file);
+        return NULL;
+    }
+
+    size_t bytes_read = fread(buffer, 1, (size_t)file_size, file);
+    fclose(file);
+
+    if (bytes_read != (size_t)file_size) {
+        printf("[ERROR] Failed to read complete file: %s\n", filename);
+        free(buffer);
+        return NULL;
+    }
+
+    *out_size = (size_t)file_size;
+    return buffer;
+}
+
 uint64_t get_timestamp_ms()
 {
 #ifdef _WIN32
@@ -699,8 +737,12 @@ int main(int argc, char* argv[])
     const char* key_file = "server.key";
     const char* cert_thumbprint = NULL;
     const char* cert_store = "My";
+    const char* pkcs12_file = "keystore.p12";
+    const char* pkcs12_password = "";
     wtf_certificate_type_t cert_type = WTF_CERT_TYPE_FILE;
     bool verbose = false;
+    uint8_t* keystore_data = NULL;
+    size_t keystore_size = 0;
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--port") == 0 && i + 1 < argc) {
@@ -717,6 +759,9 @@ int main(int argc, char* argv[])
             if (cert_type == WTF_CERT_TYPE_HASH) {
                 cert_type = WTF_CERT_TYPE_HASH_STORE;
             }
+        } else if (strcmp(argv[i], "--pkcs12") == 0 && i + 1 < argc) {
+            pkcs12_file = argv[++i];
+            cert_type = WTF_CERT_TYPE_PKCS12;
         } else if (strcmp(argv[i], "--verbose") == 0) {
             verbose = true;
         } else if (strcmp(argv[i], "--help") == 0) {
@@ -727,6 +772,7 @@ int main(int argc, char* argv[])
             printf("  --key <file>            Private key file (default: server.key)\n");
             printf("  --thumbprint <hash>     Certificate thumbprint (Windows/Schannel)\n");
             printf("  --store <name>          Certificate store name (default: My)\n");
+            printf("  --pkcs12 <name>         Path to pkcs12 file\n");
             printf("  --verbose               Enable verbose logging\n");
             printf("  --help                  Show this help\n");
             printf("\nSupported Commands:\n");
@@ -770,6 +816,16 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    if (cert_type == WTF_CERT_TYPE_PKCS12) {
+        keystore_data = load_file_bytes(pkcs12_file, &keystore_size);
+        if (!keystore_data) {
+            printf("[ERROR] Failed to load PKCS12 file: %s\n", pkcs12_file);
+            wtf_context_destroy(g_context);
+            return 1;
+        }
+        printf("[CONFIG] Loaded PKCS12 file: %s (%zu bytes)\n", pkcs12_file, keystore_size);
+    }
+
     wtf_certificate_config_t cert_config = {0};
     cert_config.cert_type = cert_type;
 
@@ -785,8 +841,16 @@ int main(int argc, char* argv[])
             cert_config.cert_data.hash_store.thumbprint = cert_thumbprint;
             cert_config.cert_data.hash_store.store_name = cert_store;
             break;
+        case WTF_CERT_TYPE_PKCS12:
+            cert_config.cert_data.pkcs12.data = keystore_data;
+            cert_config.cert_data.pkcs12.data_size = keystore_size;
+            cert_config.cert_data.pkcs12.password = pkcs12_password;
+            break;
         default:
             printf("[ERROR] Unsupported certificate type\n");
+            if (keystore_data) {
+                free(keystore_data);
+            }
             wtf_context_destroy(g_context);
             return 1;
     }
@@ -842,6 +906,10 @@ int main(int argc, char* argv[])
     wtf_server_stop(g_server);
     wtf_server_destroy(g_server);
     wtf_context_destroy(g_context);
+
+    if (keystore_data) {
+        free(keystore_data);
+    }
 
     printf("[SHUTDOWN] Server stopped cleanly\n");
     return 0;
