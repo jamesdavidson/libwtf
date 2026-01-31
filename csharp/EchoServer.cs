@@ -37,6 +37,15 @@ public unsafe class EchoServer
 
     static wtf_connection_decision_t connection_validator(wtf_connection_request_t* request, void* user_data)
     {
+        // From machine clients these headers could include authorisation but from the browser
+        // these headers will be empty. See https://github.com/w3c/webtransport/issues/263
+        for (int i = 0; i < (int)request->header_count; i++)
+        {
+            var k = Marshal.PtrToStringAnsi((IntPtr)request->headers[i].name);
+            var v = Marshal.PtrToStringAnsi((IntPtr)request->headers[i].value);
+            Console.Out.WriteLine($"[CONN] Header: {k} = {v}");
+        }
+
         return wtf_connection_decision_t.WTF_CONNECTION_ACCEPT;
     }
 
