@@ -135,7 +135,8 @@ public unsafe class EchoServer
                 break;
             }
 
-            default:
+            case wtf_session_event_type_t.WTF_SESSION_EVENT_DRAINING:
+                Console.Out.WriteLine("[SESSION] Session {0} is draining", (IntPtr)evt->user_context);
                 break;
         }
     }
