@@ -51,13 +51,87 @@ public unsafe class EchoServer
 
     static void session_callback(wtf_session_event_t* evt)
     {
-        var session_ctx = evt->user_context;
+        if (evt->user_context == null)
+        {
+            evt->user_context = (void*)new IntPtr(1);
+        }
 
         switch (evt->type)
         {
             case wtf_session_event_type_t.WTF_SESSION_EVENT_CONNECTED:
             {
-                Console.Out.WriteLine("[SESSION] New session connected");
+                Console.Out.WriteLine("[SESSION] New session connected {0}", (IntPtr)evt->user_context);
+                break;
+            }
+
+            case wtf_session_event_type_t.WTF_SESSION_EVENT_DISCONNECTED: {
+                var msg = Marshal.PtrToStringAnsi((IntPtr)evt->disconnected.reason);
+                if (msg == null || msg == "") msg = "none";
+
+                Console.Out.WriteLine("[SESSION] Session {0} disconnected (error: {1}, reason: {2})",
+                    (IntPtr)evt->user_context,
+                    evt->disconnected.error_code,
+                    msg);
+
+                break;
+            }
+
+            case wtf_session_event_type_t.WTF_SESSION_EVENT_DATAGRAM_RECEIVED: {
+                Console.Out.WriteLine("[DATAGRAM] Received on session {0} ({1} bytes)",
+                    (IntPtr)evt->user_context,
+                    evt->datagram_received.length);
+
+                ReadOnlySpan<byte> datagramData = new ReadOnlySpan<byte>(evt->datagram_received.data, (int)evt->datagram_received.length);
+
+                var n = datagramData.Length;
+                var reversedPtr = Marshal.AllocHGlobal(n);
+                var reversed = (byte*)reversedPtr;
+                Console.Out.WriteLine($"reversedPtr = {reversedPtr}");
+                Console.Out.WriteLine($"reversed = {(IntPtr)reversed}");
+                for (int i = 0; i < n; i++)
+                {
+                    reversed[i] = datagramData[n - i - 1];
+                }
+
+                var buffer = new wtf_buffer_t()
+                {
+                    data = reversed,
+                    length = (uint)n,
+                };
+
+                wtf_result_t result = Methods.wtf_session_send_datagram(evt->session, &buffer,1);
+                if (result == wtf_result_t.WTF_SUCCESS) {
+                    Console.Out.WriteLine("[DATAGRAM] Echoed {0} bytes", n);
+                } else
+                {
+                    var msg = Marshal.PtrToStringAnsi((IntPtr)Methods.wtf_result_to_string(result));
+                    Console.Out.WriteLine("[DATAGRAM] Failed to echo: {0}", msg);
+                    Marshal.FreeHGlobal((IntPtr)reversed);
+                }
+
+                break;
+            }
+
+            case wtf_session_event_type_t.WTF_SESSION_EVENT_DATAGRAM_SEND_STATE_CHANGE:
+            {
+                // only free buffers if resending is not going to happen as per WTF_DATAGRAM_SEND_STATE_IS_FINAL in wtf.h
+                var sendState = evt->datagram_send_state_changed.state;
+                var mightResend = sendState >= wtf_datagram_send_state_t.WTF_DATAGRAM_SEND_LOST_DISCARDED;
+                if (!mightResend) {
+                    for (var i = 0; i < evt->datagram_send_state_changed.buffer_count; i++)
+                    {
+                        var data = evt->datagram_send_state_changed.buffers[i].data;
+                        var dataPtr = (IntPtr)data;
+                        Console.Out.WriteLine($"data = {(IntPtr)data}");
+                        Console.Out.WriteLine($"dataPtr = {dataPtr}");
+
+                        if (dataPtr != null && dataPtr != IntPtr.Zero)
+                        {
+                            Marshal.FreeHGlobal(dataPtr);
+                        }
+                    }
+                }
+
                 break;
             }
 
