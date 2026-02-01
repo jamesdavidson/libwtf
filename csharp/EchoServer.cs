@@ -1,4 +1,6 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Text.Unicode;
 
@@ -16,6 +18,10 @@ public unsafe class EchoServer
     public wtf_context* g_context;
     public bool g_running = true;
     public wtf_server* g_server;
+
+    public static clojure.lang.IFn Serializer = null;
+    public static clojure.lang.IFn Deserializer = null;
+    public static clojure.lang.IFn Handler = null;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void session_callback_delegate(wtf_session_event_t* evt);
@@ -121,19 +127,22 @@ public unsafe class EchoServer
 
                 ReadOnlySpan<byte> datagramData = new ReadOnlySpan<byte>(evt->datagram_received.data, (int)evt->datagram_received.length);
 
-                var n = datagramData.Length;
-                var reversedPtr = Marshal.AllocHGlobal(n);
-                var reversed = (byte*)reversedPtr;
-                Console.Out.WriteLine($"reversedPtr = {reversedPtr}");
-                Console.Out.WriteLine($"reversed = {(IntPtr)reversed}");
-                for (int i = 0; i < n; i++)
-                {
-                    reversed[i] = datagramData[n - i - 1];
-                }
+                var input = new MemoryStream();
+                var output = new MemoryStream();
+                input.Write(datagramData);
+                input.Seek(0, SeekOrigin.Begin);
+                var obj = Deserializer.invoke(input);
+                var val = Handler.invoke(obj);
+                Serializer.invoke(val, output);
+
+                var n = output.Length;
+                var ptr = Marshal.AllocHGlobal((int)n);
+                var outputBuffer = output.GetBuffer();
+                Marshal.Copy(outputBuffer, 0, ptr, (int)n);
 
                 var buffer = new wtf_buffer_t()
                 {
-                    data = reversed,
+                    data = (byte*)ptr,
                     length = (uint)n,
                 };
 
@@ -144,7 +153,7 @@ public unsafe class EchoServer
                 {
                     var msg = Marshal.PtrToStringAnsi((IntPtr)Methods.wtf_result_to_string(result));
                     Console.Out.WriteLine("[DATAGRAM] Failed to echo: {0}", msg);
-                    Marshal.FreeHGlobal((IntPtr)reversed);
+                    Marshal.FreeHGlobal(ptr);
                 }
 
                 break;

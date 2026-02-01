@@ -1,0 +1,42 @@
+(ns example
+  (:use clojure.pprint clojure.repl)
+  (:require [clojure.clr.io :as io]
+            [clojure.data.json :as json]
+            [com.structmap.webtransport :as wt]))
+
+(def ms (new System.IO.MemoryStream))
+(def bs (.GetBytes System.Text.Encoding/UTF8 "{\"foo\":[1,2,3,4]}"))
+(.Write ms bs 0 (count bs))
+(.Seek ms 0 System.IO.SeekOrigin/Begin)
+(in ms)
+
+(set! WebTransportFast.EchoServer/Deserializer #(with-open [rdr (io/text-reader %)] (json/read rdr)))
+(set! WebTransportFast.EchoServer/Handler identity)
+(set! WebTransportFast.EchoServer/Serializer #(with-open [wtr (new System.IO.StreamWriter %2 System.Text.Encoding/UTF8 -1 true)] (json/write %1 wtr)))
+
+(def s (new WebTransportFast.EchoServer 8443 "cert.pem" "key.pem"))
+(.Start s)
+
+(def connections (atom {}))
+
+(declare handler)
+
+(def server
+  (wt/ensure-server
+    {:port 8443
+     :cert "cert.pem"
+     :key  "key.pem"
+     :handler #'handler
+     :in #(with-open [rdr (io/text-reader %)] (json/read rdr))
+     ;:in #(with-open [rdr (new FressianReader %)] (.readObject rdr))
+     :out #(with-open [wtr (new System.IO.StreamWriter %2 System.Text.Encoding/UTF8 -1 true)] (json/write %1 wtr))
+     ;:out #(with-open [wtr (new FressianWriter %2)] (.writeObject wtr %))
+     :state connections}))
+
+(defn handler [req]
+  (let [m (meta req)]
+    (cond (:wt/datagram m)
+          (println "Got a datagram!")
+          (:wt/stream m)
+          (println "Got a stream!"))
+    {:hello "world"}))

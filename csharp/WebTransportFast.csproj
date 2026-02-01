@@ -6,6 +6,8 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
     <ItemGroup>
-      <PackageReference Include="ClangSharp" Version="21.1.8.2" />
+        <PackageReference Include="Clojure" Version="1.12.3-alpha3" />
+        <PackageReference Include="clojure.data.json" Version="2.4.1" />
+        <PackageReference Include="ClangSharp" Version="21.1.8.2" />
     </ItemGroup>
 </Project>
