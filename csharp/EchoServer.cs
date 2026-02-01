@@ -23,6 +23,11 @@ public unsafe class EchoServer
     private static session_callback_delegate _session_callback = session_callback;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void stream_callback_delegate(wtf_stream_event_t* evt);
+
+    private static stream_callback_delegate _stream_callback = stream_callback;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate wtf_connection_decision_t connection_validator_delegate(wtf_connection_request_t* request,
         void* user_data);
 
@@ -61,6 +66,39 @@ public unsafe class EchoServer
             case wtf_session_event_type_t.WTF_SESSION_EVENT_CONNECTED:
             {
                 Console.Out.WriteLine("[SESSION] New session connected {0}", (IntPtr)evt->user_context);
+                break;
+            }
+
+            case wtf_session_event_type_t.WTF_SESSION_EVENT_STREAM_OPENED:
+            {
+                Console.Out.WriteLine("[SESSION] New stream opened on session {0}", (IntPtr)evt->user_context);
+
+                // Get or create stream context
+                var stream_ctx = Methods.wtf_stream_get_context(evt->stream_opened.stream);
+
+                if (stream_ctx == null)
+                {
+                    stream_ctx = (void*) new IntPtr(1);
+
+                    // stream_ctx = malloc(sizeof(stream_context_t));
+                    // if (stream_ctx) {
+                    //     stream_ctx->stream = event->stream_opened.stream;
+                    //     stream_ctx->stream_id = (uint32_t)g_stats.streams_created;
+                    //     stream_ctx->session = event->session;
+                    //     stream_ctx->created_time = time(NULL);
+                    //     stream_ctx->is_server_initiated = false;
+                    //     stream_ctx->needs_welcome = false;
+                    //     stream_ctx->stream_type[0] = '\0';
+
+                        Methods.wtf_stream_set_context(evt->stream_opened.stream, stream_ctx);
+                    // }
+                }
+
+                Methods.wtf_stream_set_callback(evt->stream_opened.stream,
+                    (delegate* unmanaged[Cdecl]<wtf_stream_event_t*, void>)Marshal.GetFunctionPointerForDelegate(
+                        _stream_callback));
+
+                Console.Out.WriteLine("[SESSION] Stream {0} configured", (IntPtr)stream_ctx);
                 break;
             }
 
@@ -137,6 +175,83 @@ public unsafe class EchoServer
 
             case wtf_session_event_type_t.WTF_SESSION_EVENT_DRAINING:
                 Console.Out.WriteLine("[SESSION] Session {0} is draining", (IntPtr)evt->user_context);
+                break;
+        }
+    }
+
+    static void stream_callback(wtf_stream_event_t* evt)
+    {
+        switch (evt->type) {
+            case wtf_stream_event_type_t.WTF_STREAM_EVENT_SEND_COMPLETE: {
+                for (var i = 0; i < evt->send_complete.buffer_count; i++)
+                {
+                    var data = evt->send_complete.buffers[i].data;
+                    var dataPtr = (IntPtr)data;
+                    Console.Out.WriteLine($"data = {(IntPtr)data}");
+                    Console.Out.WriteLine($"dataPtr = {dataPtr}");
+
+                    if (dataPtr != null && dataPtr != IntPtr.Zero)
+                    {
+                        Marshal.FreeHGlobal(dataPtr);
+                    }
+                }
+
+                break;
+            }
+
+            case wtf_stream_event_type_t.WTF_STREAM_EVENT_DATA_RECEIVED: {
+                if (evt->data_received.fin == TRUE) {
+                    break;
+                }
+                Console.Out.WriteLine("[STREAM] Data received on stream {0}", (IntPtr)evt->user_context);
+
+                var asdf = new MemoryStream();
+                var n = evt->data_received.buffer_count;
+                for (var i = 0; i < n; i++)
+                {
+                    var buf = evt->data_received.buffers[i];
+                    var span = new ReadOnlySpan<byte>(buf.data, (int)buf.length);
+                    asdf.Write(span);
+                }
+
+                Console.Out.WriteLine("[STREAM] Received {0} bytes", asdf.Length);
+
+                var responsePtr = Marshal.AllocHGlobal((int)asdf.Length);
+
+                var buffer = new wtf_buffer_t()
+                {
+                    data = (byte*)responsePtr,
+                    length = (uint)asdf.Length,
+                };
+                var status = Methods.wtf_stream_send(evt->stream, &buffer, 1, FALSE);
+                if (status == wtf_result_t.WTF_SUCCESS) {
+                    Console.Out.WriteLine("[STREAM] Echoed {0} bytes", asdf.Length);
+                } else
+                {
+                    var msg = Marshal.PtrToStringAnsi((IntPtr)Methods.wtf_result_to_string(status));
+                    Console.Out.WriteLine("[STREAM] Failed to echo: {0}", msg);
+                    Marshal.FreeHGlobal(responsePtr);
+                }
+
+                break;
+            }
+
+            case wtf_stream_event_type_t.WTF_STREAM_EVENT_PEER_CLOSED:
+                Console.Out.WriteLine("[STREAM] Stream {0} closed by peer", (IntPtr)evt->user_context);
+                break;
+
+            case wtf_stream_event_type_t.WTF_STREAM_EVENT_CLOSED:
+                Console.Out.WriteLine("[STREAM] Stream {0} fully closed", (IntPtr)evt->user_context);
+                // if (stream_ctx) {
+                //     free(stream_ctx);
+                // }
+                break;
+
+            case wtf_stream_event_type_t.WTF_STREAM_EVENT_ABORTED:
+                Console.Out.WriteLine("[STREAM] Stream {0} aborted with error {1}", (IntPtr)evt->user_context, evt->aborted.error_code);
+                // if (stream_ctx) {
+                //     free(stream_ctx);
+                // }
                 break;
         }
     }
