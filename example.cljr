@@ -2,7 +2,11 @@
   (:use clojure.pprint clojure.repl)
   (:require [clojure.clr.io :as io]
             [clojure.data.json :as json]
-            [com.structmap.webtransport :as wt]))
+            ;[com.structmap.webtransport :as wt]
+            )
+  (:import [System.IO StreamWriter]
+           [System.Text Encoding]
+           [WebTransportFast EchoServer]))
 
 (def ms (new System.IO.MemoryStream))
 (def bs (.GetBytes System.Text.Encoding/UTF8 "{\"foo\":[1,2,3,4]}"))
@@ -26,11 +30,11 @@
     {:port 8443
      :cert "cert.pem"
      :key  "key.pem"
+     :reader #(io/text-reader %)
+     :read json/read
      :handler #'handler
-     :in #(with-open [rdr (io/text-reader %)] (json/read rdr))
-     ;:in #(with-open [rdr (new FressianReader %)] (.readObject rdr))
-     :out #(with-open [wtr (new System.IO.StreamWriter %2 System.Text.Encoding/UTF8 -1 true)] (json/write %1 wtr))
-     ;:out #(with-open [wtr (new FressianWriter %2)] (.writeObject wtr %))
+     :write  json/write
+     :writer #(new StreamWriter % Encoding/UTF8 -1 true)
      :state connections}))
 
 (defn handler [req]
