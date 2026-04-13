@@ -143,7 +143,9 @@ else()
 endif()
 
 
-if(WTF_USE_EXTERNAL_MSQUIC)
+if (WTF_USE_EXTERNAL_MSQUIC AND MSQUIC_LIBRARIES MATCHES "targets$")
+    # pass through the msbuild .targets file
+elseif(WTF_USE_EXTERNAL_MSQUIC)
     find_package(msquic CONFIG REQUIRED)
     set(MSQUIC_LIBRARIES msquic)
 else()
